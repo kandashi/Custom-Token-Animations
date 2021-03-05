@@ -14,6 +14,11 @@ class CTA {
             let deleteToken = canvas.tokens.get(token._id)
             TweenMax.killTweensOf(deleteToken.children)
         });
+        Hooks.on("createToken", (scene, token) => {
+            let tokenInstance = canvas.tokens.get(token._id)
+            let flags = tokenInstance.getFlag("Custom-Token-Animations", "anim") ? tokenInstance.getFlag("Custom-Token-Animations", "anim") : []
+            if (flags) CTA.AddTweens(tokenInstance)
+        });
     }
 
 
@@ -53,10 +58,10 @@ class CTA {
                 multiple: multiple,
                 id: randomID()
             })
-            token.setFlag("Custom-Token-Animations", "anim", flags)
+            await token.setFlag("Custom-Token-Animations", "anim", flags)
         }
-        if(pushActor) {
-            let flags = token.actor.getFlag("Custom-Token-Animations", "anim") ? token.actor.getFlag("Custom-Token-Animations", "anim") : []
+        if (pushActor) {
+            let flags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") ? getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") : []
             flags.push({
                 name: name !== undefined ? name : flags.length,
                 texture: texture,
@@ -65,17 +70,20 @@ class CTA {
                 multiple: multiple,
                 id: randomID()
             })
-            token.actor.setFlag("Custom-Token-Animations", "anim", flags)
+            await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
         }
     }
 
 
 
-    static AddTweens() {
-        for (let testToken of canvas.tokens.placeables) {
+    static AddTweens(token) {
+        let testArray = []
+        if (token) testArray.push(token)
+        else testArray = canvas.tokens.placeables
+        for (let testToken of testArray) {
             let flag = testToken.getFlag("Custom-Token-Animations", "anim")
-            if (!flag) return;
-            flag.forEach(f => CTA.addAnimation(testToken, f.texture, f.scale, f.speed, false, f.name, f.multiple))
+            if (!flag) continue;
+            flag.forEach(f => CTA.addAnimation(testToken, f.texture, f.scale, f.speed, false, false, f.name, f.multiple))
         }
     }
 
@@ -234,10 +242,11 @@ class CTA {
         }
     }
 
-    static async removeAnim(token, animId) {
+    static async removeAnim(token, animId, actorRemoval) {
         let anims = await token.getFlag("Custom-Token-Animations", "anim")
         let removeAnim = anims.findIndex(i => i.id === animId)
         anims.splice(removeAnim, 1)
+        if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
         await token.setFlag("Custom-Token-Animations", "anim", anims)
         CTA.resetTweens(token)
     }
@@ -267,16 +276,25 @@ class CTA {
                         content: `Are you sure you want to remove this animation`,
                         buttons: {
                             one: {
-                                label: "Confirm",
+                                label: "Delete from Actor",
                                 icon: `<i class="fas fa-check"></i>`,
                                 callback: () => {
-                                    CTA.removeAnim(token, updateAnim)
+                                    CTA.removeAnim(token, updateAnim, true)
                                 }
                             },
                             two: {
+                                label: "Delete from Token",
+                                icon: `<i class="fas fa-check"></i>`,
+                                callback: () => {
+                                    CTA.removeAnim(token, updateAnim, false)
+                                }
+                            },
+                            three: {
                                 label: "Return",
                                 icon: `<i class="fas fa-undo-alt"></i>`,
-                                callback: CTA.getAnims(token)
+                                callback: () => {
+                                    CTA.getAnims(token)
+                                }
                             }
                         }
                     }).render(true)
@@ -299,7 +317,7 @@ class CTA {
                 }
             }
         }
-        if (anims) {
+        if (anims && anims !== []) {
             content = `<div class="form group">
                             <label> Animations: </label>
                             <div><select name="anims">${anims.reduce((acc, anim) => acc += `<option value = ${anim.id}>${anim.name}</option>`, '')}</select></div>
