@@ -22,19 +22,38 @@ class CTA {
     }
 
 
-    static async addAnimation(token, texture, scale, speed, pushToken, pushActor, name, multiple) {
-        let CTAtexture = await loadTexture(texture)
+    static async addAnimation(token, textureData, pushToken, pushActor, name) {
+        let { texturePath, scale, speed, multiple, rotation, xScale, yScale } = textureData
+        let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
         CTAtexture.orig = { height: textureSize * scale, width: textureSize * scale, x: (textureSize) / 2, y: (textureSize) / 2 }
 
-        for (i = 0; i <= multiple - 1; i++) {
+        if (rotation === "rotation") {
+            for (i = 0; i <= multiple - 1; i++) {
+                let sprite = new PIXI.Sprite(CTAtexture)
+                sprite.anchor.set(0.5)
+                sprite.pivot.set(textureSize / 2)
+                sprite.position.set(textureSize / 2)
+                var i;
+                let icon = await token.addChild(sprite)
+                await icon.position.set(token.data.height * canvas.grid.size / 2)
+                const source = getProperty(icon._texture, "baseTexture.resource.source")
+                if (source && (source.tagName === "VIDEO")) {
+                    source.loop = true;
+                    source.muted = true;
+                    game.video.play(source);
+                }
+                icon.CTA = true
+                let delay = i * (speed / multiple)
+                let tween = TweenMax.to(icon, speed, { angle: 360, repeat: -1, ease: Linear.easeNone, delay: delay });
+                CTA.canvasTweens.push(tween)
+            }
+        }
+        if (rotation === "static") {
             let sprite = new PIXI.Sprite(CTAtexture)
             sprite.anchor.set(0.5)
-            sprite.pivot.set(textureSize / 2)
-            sprite.position.set(textureSize / 2)
-            var i;
             let icon = await token.addChild(sprite)
-            await icon.position.set(token.data.height * canvas.grid.size / 2)
+            icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
             const source = getProperty(icon._texture, "baseTexture.resource.source")
             if (source && (source.tagName === "VIDEO")) {
                 source.loop = true;
@@ -42,20 +61,13 @@ class CTA {
                 game.video.play(source);
             }
             icon.CTA = true
-            let delay = i * (speed / multiple)
-            let tween = TweenMax.to(icon, speed, { angle: 360, repeat: -1, ease: Linear.easeNone, delay: delay });
-            CTA.canvasTweens.push(tween)
         }
-
 
         if (pushToken) {
             let flags = token.getFlag("Custom-Token-Animations", "anim") ? token.getFlag("Custom-Token-Animations", "anim") : []
             flags.push({
                 name: name !== undefined ? name : flags.length,
-                texture: texture,
-                scale: scale,
-                speed: speed,
-                multiple: multiple,
+                textureData: textureData,
                 id: randomID()
             })
             await token.setFlag("Custom-Token-Animations", "anim", flags)
@@ -64,10 +76,7 @@ class CTA {
             let flags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") ? getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") : []
             flags.push({
                 name: name !== undefined ? name : flags.length,
-                texture: texture,
-                scale: scale,
-                speed: speed,
-                multiple: multiple,
+                textureData: textureData,
                 id: randomID()
             })
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
@@ -83,12 +92,14 @@ class CTA {
         for (let testToken of testArray) {
             let flag = testToken.getFlag("Custom-Token-Animations", "anim")
             if (!flag) continue;
-            flag.forEach(f => CTA.addAnimation(testToken, f.texture, f.scale, f.speed, false, false, f.name, f.multiple))
+            flag.forEach(f => {
+                CTA.addAnimation(testToken, f.textureData, false, false, f.name)
+            })
         }
     }
 
 
-    static animationDialog(OGpath, token) {
+    static animationDialog(OGpath, token, oldData) {
         if (canvas.tokens.controlled > 1 && !token) {
             ui.notifications.error("Please select only one token");
             return;
@@ -119,21 +130,30 @@ class CTA {
                     <input id="scale" name="scale" type="number" step="0.1"></input>
             </div>
         <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
+            <label for="static">Static Image?: </label>
+            <input id="static" name="static" type="checkbox" ></input>
+            </div>
+        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
                     <label for="speed">Speed of rotation: </label>
                     <input id="speed" name="speed" type="number" step="0.1" placeholder="seconds per rotation"></input>
             </div>
         <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="pushToken">Permenant on Token?: </label>
-            <input id="pushToken" name="pushToken" type="checkbox" ></input>
+            <label for="multiple">Nubmer of Copies: </label>
+            <input id="multiple" name="multiple" type="number" min="1"</input>
             </div>
+        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
+            <label for="xScale">Position on X scale (static only): </label>
+            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right"></input>
+        </div>
+        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
+            <label for="yScale">Position on Y scale (static only): </label>
+            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom"></input>
+        </div>
         <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
             <label for="pushActor">Permenant on Actor?: </label>
             <input id="pushActor" name="pushActor" type="checkbox" ></input>
         </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="multiple">Nubmer of Copies: </label>
-            <input id="multiple" name="multiple" type="number" min="1"</input>
-    </div>
+        
 `,
             buttons: {
                 one: {
@@ -143,10 +163,21 @@ class CTA {
                         let name = html.find("#name")[0].value
                         let scale = Number(html.find("#scale")[0].value)
                         let speed = Number(html.find("#speed")[0].value)
-                        let pushToken = html.find("#pushToken")[0].value === "on" ? true : false
-                        let pushActor = html.find("#pushActor")[0].value === "on" ? true : false
+                        let rotation = html.find("#static")[0].checked ? "static" : "rotation"
+                        let pushActor = html.find("#pushActor")[0].checked
                         let multiple = parseInt(html.find("#multiple")[0].value)
-                        CTA.addAnimation(token, path, scale, speed, pushToken, pushActor, name, multiple)
+                        let xScale = parseFloat(html.find("#xScale")[0].value)
+                        let yScale = parseFloat(html.find("#yScale")[0].value)
+                        let textureData = {
+                            texturePath: path,
+                            scale: scale,
+                            speed: speed,
+                            multiple: multiple,
+                            rotation: rotation,
+                            xScale: xScale,
+                            yScale: yScale,
+                        }
+                        CTA.addAnimation(token, textureData, true, pushActor, name)
                     }
                 }
             }
@@ -188,7 +219,18 @@ class CTA {
 
         let flag = token.getFlag("Custom-Token-Animations", "anim")
         if (!flag) return;
-        flag.forEach(f => CTA.addAnimation(token, f.texture, f.scale, f.speed, false, f.name, f.multiple))
+        flag.forEach(f => {
+            let textureData = {
+                texturePath: f.texture,
+                scale: f.scale,
+                speed: f.speed,
+                multiple: f.multiple,
+                static: f.static,
+                xScale: f.xScale,
+                yScale: f.yScale,
+            }
+            CTA.addAnimation(token, textureData, false, false, f.name)
+        })
     }
 
     static async incrementDialog(token, animId) {
@@ -317,7 +359,7 @@ class CTA {
                 }
             }
         }
-        if (anims && anims !== []) {
+        if (anims && anims.length > 0) {
             content = `<div class="form group">
                             <label> Animations: </label>
                             <div><select name="anims">${anims.reduce((acc, anim) => acc += `<option value = ${anim.id}>${anim.name}</option>`, '')}</select></div>
