@@ -19,24 +19,42 @@ class CTA {
             let flags = tokenInstance.getFlag("Custom-Token-Animations", "anim") ? tokenInstance.getFlag("Custom-Token-Animations", "anim") : []
             if (flags) CTA.AddTweens(tokenInstance)
         });
+        Hooks.on("preUpdateToken", async (_scene, token, update) => {
+            if ("height" in update || "width" in update) {
+                let fullToken = canvas.tokens.get(token._id)
+                let CTAtweens = fullToken.children.filter(c => c.CTA === true)
+                for (let child of CTAtweens) {
+                    TweenMax.killTweensOf(child)
+                    child.destroy()
+                }
+            }
+        })
+        Hooks.on("updateToken", (_scene, token, update) => {
+            if ("height" in update || "width" in update) {
+                let fullToken = canvas.tokens.get(token._id)
+                CTA.resetTweens(fullToken)
+            }
+        })
     }
 
 
-    static async addAnimation(token, textureData, pushToken, pushActor, name) {
-        let { texturePath, scale, speed, multiple, rotation, xScale, yScale } = textureData
+    static async addAnimation(token, textureData, pushToken, pushActor, name, update) {
+        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius } = textureData
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
         CTAtexture.orig = { height: textureSize * scale, width: textureSize * scale, x: (textureSize) / 2, y: (textureSize) / 2 }
 
-        if (rotation === "rotation") {
+        if (rotation === "rotation" && !update) {
+            token.sortableChildren = true
             for (i = 0; i <= multiple - 1; i++) {
                 let sprite = new PIXI.Sprite(CTAtexture)
-                sprite.anchor.set(0.5)
+                //sprite.anchor.set(0.5)
+                sprite.anchor.set(radius)
                 sprite.pivot.set(textureSize / 2)
                 sprite.position.set(textureSize / 2)
                 var i;
                 let icon = await token.addChild(sprite)
-                await icon.position.set(token.data.height * canvas.grid.size / 2)
+                await icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
                 const source = getProperty(icon._texture, "baseTexture.resource.source")
                 if (source && (source.tagName === "VIDEO")) {
                     source.loop = true;
@@ -44,16 +62,19 @@ class CTA {
                     game.video.play(source);
                 }
                 icon.CTA = true
+                if (belowToken) icon.zIndex = -1
                 let delay = i * (speed / multiple)
                 let tween = TweenMax.to(icon, speed, { angle: 360, repeat: -1, ease: Linear.easeNone, delay: delay });
                 CTA.canvasTweens.push(tween)
+
             }
         }
-        if (rotation === "static") {
+        if (rotation === "static" && !update) {
+            token.sortableChildren = true
             let sprite = new PIXI.Sprite(CTAtexture)
             sprite.anchor.set(0.5)
             let icon = await token.addChild(sprite)
-            icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
+            await icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
             const source = getProperty(icon._texture, "baseTexture.resource.source")
             if (source && (source.tagName === "VIDEO")) {
                 source.loop = true;
@@ -61,10 +82,20 @@ class CTA {
                 game.video.play(source);
             }
             icon.CTA = true
+            if (belowToken) icon.zIndex = -1
         }
 
         if (pushToken) {
-            let flags = token.getFlag("Custom-Token-Animations", "anim") ? token.getFlag("Custom-Token-Animations", "anim") : []
+            //let flags = token.getFlag("Custom-Token-Animations", "anim") ? token.getFlag("Custom-Token-Animations", "anim") : []
+            let flagData = token.getFlag("Custom-Token-Animations", "anim") || []
+            let flags = Array.from(flagData)
+            let duplicate = flags.find(i => i.name === name)
+            if (duplicate) {
+                let index = flags.indexOf(duplicate)
+                if (index > -1) {
+                    flags.splice(index, 1)
+                }
+            }
             flags.push({
                 name: name !== undefined ? name : flags.length,
                 textureData: textureData,
@@ -73,7 +104,15 @@ class CTA {
             await token.setFlag("Custom-Token-Animations", "anim", flags)
         }
         if (pushActor) {
-            let flags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") ? getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") : []
+            let flagData = getProperty(token, "actor.data.token.flagsCustom-Token-Animations.anim") || []
+            let flags = Array.from(flagData)
+            let duplicate = flags.find(i => i.name === name)
+            if (duplicate) {
+                let index = flags.indexOf(duplicate)
+                if (index > -1) {
+                    flags.splice(index, 1)
+                }
+            }
             flags.push({
                 name: name !== undefined ? name : flags.length,
                 textureData: textureData,
@@ -81,6 +120,7 @@ class CTA {
             })
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
         }
+        if (update) CTA.resetTweens(token)
     }
 
 
@@ -99,11 +139,12 @@ class CTA {
     }
 
 
-    static animationDialog(OGpath, token, oldData) {
+    static async animationDialog(OGpath, token, oldData, name) {
         if (canvas.tokens.controlled > 1 && !token) {
             ui.notifications.error("Please select only one token");
             return;
         }
+        if (!OGpath) OGpath = oldData.texturePath
         function shortLeft(string, boxLength) {
             let PREFIXDIRSTR = "...";
             boxLength += PREFIXDIRSTR.length;
@@ -111,47 +152,74 @@ class CTA {
             splitString = PREFIXDIRSTR + splitString;
             return splitString;
         }
-
+        let actorFlags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || []
+        let animFlag = !!actorFlags.find(i => i.name === name)
         if (!token) token = canvas.tokens.controlled[0]
-        new Dialog({
+        let dialog = await new Dialog({
             title: "Pick Animation Effects",
             content: `
-        <form>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
+            <style> 
+            .pickDialog .form-group {
+                clear: both;
+                display: flex;
+                flex-direction: row;
+                flex-wrap: wrap;
+                margin: 3px 0;
+                align-items: center;
+            }
+            .pickDialog label span {
+                display: block;
+            }
+
+            </style>
+        <form class="pickDialog">
+        <div class="form-group">
                     <label for="name">Name: </label>
-                    <input id="name" name="name" type="text"></input>
+                    <input id="name" name="name" type="text" value= "${name}"></input>
             </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
+        <div class="form-group">
                     <label for="path">Image Path: </label>
                     <input id="path" name="path" type="text" value= "${shortLeft(OGpath, 20)}"></input>
             </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-                    <label for="scale">Scale: </label>
-                    <input id="scale" name="scale" type="number" step="0.1"></input>
+        <div class="form-group">
+                    <label for="scale"><span>Scale:</span>
+                    <span class="units">(compared to token)</span></label>
+                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale}"></input>
             </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="static">Static Image?: </label>
-            <input id="static" name="static" type="checkbox" ></input>
+        <div class="form-group">
+            <label for="rotation">Static Image: </label>
+            <input id="rotation" name="rotation" type="checkbox" ${oldData?.rotation === "static" ? 'checked' : ''} ></input>
             </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-                    <label for="speed">Speed of rotation: </label>
-                    <input id="speed" name="speed" type="number" step="0.1" placeholder="seconds per rotation"></input>
+        <div class="form-group">
+                    <label for="speed"><span>Speed of rotation: </span>
+                     <span class="units">(seconds per rotation)</span>
+                     </label>
+                    <input id="speed" name="speed" type="number" step="0.1" value= "${oldData?.speed}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
             </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="multiple">Nubmer of Copies: </label>
-            <input id="multiple" name="multiple" type="number" min="1"</input>
-            </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="xScale">Position on X scale (static only): </label>
-            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right"></input>
+        <div class="form-group">
+                    <label for="radius"><span>Radius of Rotation:</span>
+                    <span class="units">(per token width)</span> </label>
+                    <input id="radius" name="radius" type="number" step="0.1"  value= "${oldData?.radius / 2}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
         </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="yScale">Position on Y scale (static only): </label>
-            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom"></input>
+        <div class="form-group">
+            <label for="multiple">Number of Copies: </label>
+            <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
+            </div>
+        <div class="form-group">
+            <label for="xScale">Position on X scale: </label>
+            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale}"></input>
         </div>
-        <div class="form-group" clear: both; display: flex; flex-direction: row; flex-wrap: wrap;margin: 3px 0;align-items: center;">
-            <label for="pushActor">Permenant on Actor?: </label>
-            <input id="pushActor" name="pushActor" type="checkbox" ></input>
+        <div class="form-group">
+            <label for="yScale">Position on Y scale: </label>
+            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale}"></input>
+        </div>
+        <div class="form-group">
+            <label for="belowToken">Render below Token: </label>
+            <input id="belowToken" name="belowToken" type="checkbox" ${oldData?.belowToken === true ? 'checked' : ''}></input>
+        </div>
+        <div class="form-group">
+            <label for="pushActor">Permanent on Actor: </label>
+            <input id="pushActor" name="pushActor" type="checkbox" ${animFlag === true ? 'checked' : ''}></input>
         </div>
         
 `,
@@ -163,11 +231,13 @@ class CTA {
                         let name = html.find("#name")[0].value
                         let scale = Number(html.find("#scale")[0].value)
                         let speed = Number(html.find("#speed")[0].value)
-                        let rotation = html.find("#static")[0].checked ? "static" : "rotation"
+                        let rotation = html.find("#rotation")[0].checked ? "static" : "rotation"
                         let pushActor = html.find("#pushActor")[0].checked
-                        let multiple = parseInt(html.find("#multiple")[0].value)
-                        let xScale = parseFloat(html.find("#xScale")[0].value)
-                        let yScale = parseFloat(html.find("#yScale")[0].value)
+                        let multiple = Number(html.find("#multiple")[0].value)
+                        let xScale = Number(html.find("#xScale")[0].value)
+                        let yScale = Number(html.find("#yScale")[0].value)
+                        let belowToken = html.find("#belowToken")[0].checked
+                        let radius = Number(html.find("#radius")[0].value) * 2
                         let textureData = {
                             texturePath: path,
                             scale: scale,
@@ -176,12 +246,29 @@ class CTA {
                             rotation: rotation,
                             xScale: xScale,
                             yScale: yScale,
+                            belowToken: belowToken,
+                            radius: radius
                         }
-                        CTA.addAnimation(token, textureData, true, pushActor, name)
+                        CTA.addAnimation(token, textureData, true, pushActor, name, true)
                     }
                 }
             }
-        }).render(true)
+        })._render(true)
+
+
+        $('.form-group #rotation').change(function () {
+            if ($(this).is(':checked')) {
+                $('.pickDialog #multiple')[0].disabled = true
+                $('.pickDialog #speed')[0].disabled = true
+                $('.pickDialog #radius')[0].disabled = true
+            }
+            else {
+                $('.pickDialog #multiple')[0].disabled = false
+                $('.pickDialog #speed')[0].disabled = false
+                $('.pickDialog #radius')[0].disabled = true
+            }
+        })
+
     }
 
 
@@ -220,16 +307,7 @@ class CTA {
         let flag = token.getFlag("Custom-Token-Animations", "anim")
         if (!flag) return;
         flag.forEach(f => {
-            let textureData = {
-                texturePath: f.texture,
-                scale: f.scale,
-                speed: f.speed,
-                multiple: f.multiple,
-                static: f.static,
-                xScale: f.xScale,
-                yScale: f.yScale,
-            }
-            CTA.addAnimation(token, textureData, false, false, f.name)
+            CTA.addAnimation(token, f.textureData, false, false, f.name)
         })
     }
 
@@ -303,8 +381,9 @@ class CTA {
                 label: "Update",
                 icon: `<i class="fas fa-edit"></i>`,
                 callback: (html) => {
-                    let updateAnim = html.find("[name=anims]")[0].value;
-                    CTA.incrementDialog(token, updateAnim)
+                    let animId = html.find("[name=anims]")[0].value;
+                    let updateAnim = anims.find(i => i.id === animId)
+                    CTA.animationDialog(undefined, token, updateAnim.textureData, updateAnim.name)
                 }
             },
             two: {
