@@ -47,7 +47,7 @@ class CTA {
      * @param {Boolean} update replace effect by name
      */
     static async addAnimation(token, textureData, pushToken, pushActor, name, update) {
-        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius } = textureData
+        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint } = textureData
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
         CTAtexture.orig = { height: textureSize * scale, width: textureSize * scale, x: (textureSize) / 2, y: (textureSize) / 2 }
@@ -69,7 +69,9 @@ class CTA {
                     source.muted = true;
                     game.video.play(source);
                 }
-                icon.CTA = true
+                icon.CTA = true;
+                icon.alpha = opacity;
+                icon.tint = tint;
                 if (belowToken) icon.zIndex = -1
                 let delay = i * (speed / multiple)
                 let tween = TweenMax.to(icon, speed, { angle: 360, repeat: -1, ease: Linear.easeNone, delay: delay });
@@ -90,6 +92,8 @@ class CTA {
                 game.video.play(source);
             }
             icon.CTA = true
+            icon.alpha = opacity;
+            icon.tint = tint;
             if (belowToken) icon.zIndex = -1
         }
 
@@ -173,7 +177,9 @@ class CTA {
         let actorFlags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || []
         let animFlag = !!actorFlags.find(i => i.name === name)
         if (!token) token = canvas.tokens.controlled[0]
+        let hexColour = oldData?.tint.toString(16).padStart(6, '0').toUpperCase()
         let dialog = await new Dialog({
+            
             title: "Pick Animation Effects",
             content: `
             <style> 
@@ -193,7 +199,7 @@ class CTA {
         <form class="pickDialog">
         <div class="form-group">
                     <label for="name">Name: </label>
-                    <input id="name" name="name" type="text" value= "${name}"></input>
+                    <input id="name" name="name" type="text" value= "${name || ""}"></input>
             </div>
         <div class="form-group">
                     <label for="path">Image Path: </label>
@@ -202,7 +208,7 @@ class CTA {
         <div class="form-group">
                     <label for="scale"><span>Scale:</span>
                     <span class="units">(compared to token)</span></label>
-                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale}"></input>
+                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale || 1}"></input>
             </div>
         <div class="form-group">
             <label for="rotation">Static Image: </label>
@@ -212,25 +218,33 @@ class CTA {
                     <label for="speed"><span>Speed of rotation: </span>
                      <span class="units">(seconds per rotation)</span>
                      </label>
-                    <input id="speed" name="speed" type="number" step="0.1" value= "${oldData?.speed}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
+                    <input id="speed" name="speed" type="number" step="0.1" value= "${oldData?.speed || 0}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
             </div>
         <div class="form-group">
                     <label for="radius"><span>Radius of Rotation:</span>
                     <span class="units">(per token width)</span> </label>
-                    <input id="radius" name="radius" type="number" step="0.1"  value= "${oldData?.radius / 2}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
+                    <input id="radius" name="radius" type="number" step="0.1"  value= "${oldData?.radius / 2 || 1}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
         </div>
         <div class="form-group">
             <label for="multiple">Number of Copies: </label>
-            <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
+            <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple || 1} " ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
             </div>
         <div class="form-group">
             <label for="xScale">Position on X scale: </label>
-            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale}"></input>
+            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale || 0.5}"></input>
         </div>
         <div class="form-group">
             <label for="yScale">Position on Y scale: </label>
-            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale}"></input>
+            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale || 0.5}"></input>
         </div>
+        <div class="form-group">
+            <label for="opacity">Opacity: </label>
+            <input id="opacity" name="opacity" type="number" min="0" max="1" value= "${oldData?.opacity || 1}"></input>
+        </div>
+        <div class="form-group">
+                <label for="tint">Asset Tint: </label>
+                <input type="color" id="tint" name="tint" value="#${hexColour || ""}">
+            </div>
         <div class="form-group">
             <label for="belowToken">Render below Token: </label>
             <input id="belowToken" name="belowToken" type="checkbox" ${oldData?.belowToken === true ? 'checked' : ''}></input>
@@ -254,6 +268,8 @@ class CTA {
                         let multiple = Number(html.find("#multiple")[0].value)
                         let xScale = Number(html.find("#xScale")[0].value)
                         let yScale = Number(html.find("#yScale")[0].value)
+                        let opacity = Number(html.find("#opacity")[0].value)
+                        let tint = parseInt(html.find("#tint")[0].value.substr(1), 16)
                         let belowToken = html.find("#belowToken")[0].checked
                         let radius = Number(html.find("#radius")[0].value) * 2
                         let textureData = {
@@ -264,6 +280,8 @@ class CTA {
                             rotation: rotation,
                             xScale: xScale,
                             yScale: yScale,
+                            opacity: opacity,
+                            tint: tint,
                             belowToken: belowToken,
                             radius: radius
                         }
