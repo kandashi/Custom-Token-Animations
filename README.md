@@ -17,6 +17,8 @@ There are several macro commands to alter these traits but the simplest option i
 - Number of Copies: how many assets to add (rotation only)
 - Position on X scale: where on the x scale should the center of the asset sit, 0 is left boundary of the token, 1 is right boundary of the token (you can exceed these values in either direction)
 - Position on Y scale: where on the y scale should the center of the asset sit, 0 is top boundary of the token, 1 is bottom boundary of the token (you can exceed these values in either direction)
+- Opacity: how opaque the asset is 0-1
+- Tint: what tint is applied to the asset, defaults to pure white for no tint
 - Render below Token: render the asset below the token image (useful for spirit guardians etc)
 - Permanent on Actor: Permanently add this asset to the actors token, useful for persisting between scenes
 
@@ -43,6 +45,8 @@ textureData = {
     rotation: rotation ("static" or "rotation")
     xScale: xScale,
     yScale: yScale,
+    opacity: opacity,
+    tint: decimal color code
     belowToken: belowToken, (boolean)
     radius: radius 
     }
