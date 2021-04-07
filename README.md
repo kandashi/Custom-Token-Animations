@@ -1,5 +1,7 @@
 # Custom-Token-Animations
 
+![niceVisuals](https://github.com/kandashi/Custom-Token-Animations/blob/main/CTA%20full.gif?raw=true)
+
 This adds the option to add custom defined icons onto tokens. Add static icons, animated assets, rotating ioun stones etc. onto your tokens. 
 
 There are several macro commands to alter these traits but the simplest option is to use the "dotted circle" icon in the token control bar with a token selected.
