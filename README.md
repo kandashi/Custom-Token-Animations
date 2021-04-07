@@ -33,17 +33,19 @@ Preface these with `CTA.`
 - `name` is the effect name
 - `update` set to false unless you are overwriting an effect
 - `textureData` holds the details of the data:
-- textureData = {
-                            texturePath: path,
-                            scale: scale,
-                            speed: speed,
-                            multiple: multiple, (normal value*2)
-                            rotation: rotation ("static" or "rotation")
-                            xScale: xScale,
-                            yScale: yScale,
-                            belowToken: belowToken, (boolean)
-                            radius: radius 
-                        }
+```
+textureData = {
+    texturePath: path,
+    scale: scale,
+    speed: speed,
+    multiple: multiple, (normal value*2)
+    rotation: rotation ("static" or "rotation")
+    xScale: xScale,
+    yScale: yScale,
+    belowToken: belowToken, (boolean)
+    radius: radius 
+    }
+```
 
 ### animationDialog(OGpath, token, oldData, name)
 - Trigger the main effect creation dialog
