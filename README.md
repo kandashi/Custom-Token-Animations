@@ -4,7 +4,7 @@ This adds the option to add custom defined icons onto tokens. Add static icons, 
 
 There are several macro commands to alter these traits but the simplest option is to use the "dotted circle" icon in the token control bar with a token selected.
 
-##Animation Effects Breakdown
+## Animation Effects Breakdown
 -Name : name of the effect, must be unique to that token, an update with the same name will overwrite the previous effect
 -Image Path: path to the image to be used
 --Scale: how large the individual asset should be compared to the token its applied to (1 = same size)
