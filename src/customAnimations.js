@@ -37,7 +37,15 @@ class CTA {
         })
     }
 
-
+    /**
+     * 
+     * @param {Object} token token to affect
+     * @param {Object} textureData data of the effect to add
+     * @param {Boolean} pushToken permanent effect on the token, persists through refresh if true
+     * @param {Boolean} pushActor permanent effect on the actors token, persists through re-placing actor
+     * @param {String} name name of the effect, unique per actor/token
+     * @param {Boolean} update replace effect by name
+     */
     static async addAnimation(token, textureData, pushToken, pushActor, name, update) {
         let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius } = textureData
         let CTAtexture = await loadTexture(texturePath)
@@ -124,7 +132,10 @@ class CTA {
     }
 
 
-
+    /**
+     * Add effects from token flags
+     * @param {Object} token token to add to
+     */
     static AddTweens(token) {
         let testArray = []
         if (token) testArray.push(token)
@@ -138,7 +149,14 @@ class CTA {
         }
     }
 
-
+    /**
+     * 
+     * @param {String} OGpath original texture path
+     * @param {Object} token Token to apply to
+     * @param {Object} oldData Previous effect data, used in update pathway
+     * @param {String} name name of the effect
+     * @returns 
+     */
     static async animationDialog(OGpath, token, oldData, name) {
         if (canvas.tokens.controlled > 1 && !token) {
             ui.notifications.error("Please select only one token");
@@ -272,6 +290,10 @@ class CTA {
     }
 
 
+    /**
+     * Start the "full pathway"
+     * @param {Object} token Token to apply too
+     */
     static pickEffect(token) {
         let CTAPick = new FilePicker({
             type: "imagevideo",
@@ -284,7 +306,9 @@ class CTA {
         CTAPick.browse();
     }
 
-
+    /**
+     * Deprecated
+     */
     static async updateEffect(token, name, key, value) {
         let anims = await token.getFlag("Custom-Token-Animations", "anim")
         for (let i of anims) {
@@ -297,6 +321,11 @@ class CTA {
         CTA.resetTweens(token)
     }
 
+    /**
+     * Refreshes any tweens/effects on a give token, prevents spam messages
+     * @param {Object} token Token to update
+     * @returns 
+     */
     static async resetTweens(token) {
         let CTAtweens = token.children.filter(c => c.CTA === true)
         for (let child of CTAtweens) {
@@ -311,6 +340,40 @@ class CTA {
         })
     }
 
+    /**
+     * Create a macro from selected effect data
+     * @param {Object} oldData Data to transform into a macro
+     */
+    static generateMacro(oldData) {
+        let data = duplicate(oldData)
+        let image = data.textureData.texturePath.includes(".webm") ? "icons/svg/acid.svg" : data.textureData.texturePath
+        let macroData = {
+            command: `
+            let textureData = {
+                texturePath: "${data.textureData.texturePath}",
+                scale: ${data.textureData.scale},
+                speed: ${data.textureData.speed},
+                multiple: ${data.textureData.multiple},
+                rotation: "${data.textureData.rotation}",
+                xScale: ${data.textureData.xScale},
+                yScale: ${data.textureData.yScale},
+                belowToken: ${data.textureData.belowToken},
+                radius: ${data.textureData.radius},
+            }
+            CTA.addAnimation(token, textureData, true, false, "${data.name}", false)
+            `,
+            img: image,
+            name: `CTA ${data.name}`,
+            scope: "global",
+            type: "script"
+        }
+        Macro.create(macroData)
+    }
+
+
+    /**
+     * Deprecated
+     */
     static async incrementDialog(token, animId) {
         let anims = await token.getFlag("Custom-Token-Animations", "anim")
         let anim = anims.find(p => p.id === animId)
@@ -339,6 +402,9 @@ class CTA {
         }).render(true)
     }
 
+    /**
+    * Deprecated
+    */
     static async incrementEffect(token, animId, value) {
         let anims = await token.getFlag("Custom-Token-Animations", "anim")
         let updateAnim = anims.find(i => i.id === animId)
@@ -347,6 +413,8 @@ class CTA {
         await token.setFlag("Custom-Token-Animations", "anim", anims)
         CTA.resetTweens(token)
     }
+
+    // Add button to sidebar
     static getSceneControlButtons(buttons) {
         let tokenButton = buttons.find(b => b.name == "token")
 
@@ -361,7 +429,12 @@ class CTA {
             });
         }
     }
-
+/**
+ * Remove an effect from selected token
+ * @param {Object} token Token to act upon
+ * @param {String} animId Id of the effect to remove
+ * @param {Boolean} actorRemoval Remove from prototype token
+ */
     static async removeAnim(token, animId, actorRemoval) {
         let anims = await token.getFlag("Custom-Token-Animations", "anim")
         let removeAnim = anims.findIndex(i => i.id === animId)
@@ -371,6 +444,11 @@ class CTA {
         CTA.resetTweens(token)
     }
 
+    /**
+     * Prompt for full pathway
+     * @param {Object} token token to update
+     * @returns 
+     */
     static async getAnims(token) {
         if (canvas.tokens.controlled.length !== 1) { ui.notifications.notify("Please select one token"); return; }
         if (!token) token = canvas.tokens.controlled[0]
@@ -422,6 +500,15 @@ class CTA {
                 }
             },
             three: {
+                label: "Replicate to Macro",
+                icon: `<i class="fas fa-file-import"></i>`,
+                callback: (html) => {
+                    let animId = html.find("[name=anims]")[0].value;
+                    let updateAnim = anims.find(i => i.id === animId)
+                    CTA.generateMacro(updateAnim)
+                }
+            },
+            four: {
                 label: "Add New",
                 icon: `<i class="fas fa-plus"></i>`,
                 callback: () => {
