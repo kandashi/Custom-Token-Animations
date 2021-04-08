@@ -4,13 +4,14 @@
 	"title": "Custom Token Animations", 
 	"description": "Custom Token Animations",
 	"author": "Kandashi",
-	"version": "0.1.03",
+	"version": "0.1.04",
   "minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.9",
 	"scripts": [
 		"greensock/dist/gsap.min.js",
 		"src/customAnimations.js"
 	],
+	"socket": true,
 	"url": "https://github.com/kandashi/Custom-Token-Animations",
     "manifest": "https://raw.githubusercontent.com/kandashi/Custom-Token-Animations/main/module.json",
 	"download": "https://github.com/kandashi/Custom-Token-Animations/archive/main.zip"
