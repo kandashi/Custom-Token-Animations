@@ -10,7 +10,7 @@ There are several macro commands to alter these traits but the simplest option i
 ## Animation Effects Breakdown
 - Name : name of the effect, must be unique to that token, an update with the same name will overwrite the previous effect
 - Image Path: path to the image to be used
-- Scale: how large the individual asset should be compared to the token its applied to (1 = same size)
+- Scale: how large the individual asset should be compared to the token its applied to (1 = same size), this can be a single digit or two matching x/y eg. "1,2" would result in a tall, narrow asset  (negative values will flip in that axis)
 - Static Image: is the image static, or with rotation
 - Speed of Rotation: how fast should the asset rotate around the center, measured in seconds per full rotation
 - Radius of Rotation: how far should the asset expand past the token borders, measured in token width (1 width token with radius of 1 would have the assets rotate 1 square away from the token border)
@@ -21,6 +21,7 @@ There are several macro commands to alter these traits but the simplest option i
 - Tint: what tint is applied to the asset, defaults to pure white for no tint
 - Render below Token: render the asset below the token image (useful for spirit guardians etc)
 - Permanent on Actor: Permanently add this asset to the actors token, useful for persisting between scenes
+- Apply as Equipment: Will now match rotate around the center point of the token to match the token image
 
 ## API/Macro Commands
 Preface these with `CTA.` 
@@ -38,17 +39,18 @@ Preface these with `CTA.`
 - `textureData` holds the details of the data:
 ```
 textureData = {
-    texturePath: path,
-    scale: scale,
-    speed: speed,
-    multiple: multiple, (normal value*2)
-    rotation: rotation ("static" or "rotation")
-    xScale: xScale,
-    yScale: yScale,
-    opacity: opacity,
+    texturePath: string
+    scale: number
+    speed: number
+    multiple: number value*2
+    rotation: "static" or "rotation"
+    xScale: number
+    yScale: number
+    opacity: number, 0-1
     tint: decimal color code
-    belowToken: belowToken, (boolean)
-    radius: radius 
+    belowToken: boolean
+    radius: number
+    equip: boolean
     }
 ```
 
