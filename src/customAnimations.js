@@ -90,8 +90,8 @@ class CTA {
                 icon.alpha = opacity;
                 icon.tint = tint;
                 if (belowToken) icon.zIndex = -1
-                let delay = i * (speed / multiple)
-                let tween = TweenMax.to(icon, speed, { angle: 360, repeat: -1, ease: Linear.easeNone, delay: delay });
+                icon.angle = i * (360 / multiple)
+                let tween = TweenMax.to(icon, speed, { angle: (360 + icon.angle), repeat: -1, ease: Linear.easeNone});
                 CTA.canvasTweens.push(tween)
 
             }
@@ -117,6 +117,7 @@ class CTA {
             icon.CTA = true
             icon.alpha = opacity;
             icon.tint = tint;
+            icon.angle = token.data.rotation
             if (belowToken) icon.zIndex = -1
         }
 
