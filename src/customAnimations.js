@@ -16,7 +16,7 @@ class CTA {
         });
         Hooks.on("createToken", (scene, token) => {
             let tokenInstance = canvas.tokens.get(token._id)
-            if(!tokenInstance) return;
+            if (!tokenInstance) return;
             let flags = tokenInstance.getFlag("Custom-Token-Animations", "anim") ? tokenInstance.getFlag("Custom-Token-Animations", "anim") : []
             if (flags) CTA.AddTweens(tokenInstance)
         });
@@ -38,7 +38,7 @@ class CTA {
         })
     }
 
-    
+
     /**
      * 
      * @param {Object} token token to affect
@@ -49,11 +49,27 @@ class CTA {
      * @param {Boolean} update replace effect by name
      */
     static async addAnimation(token, textureData, pushToken, pushActor, name, update) {
-        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint } = textureData
+        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
-        CTAtexture.orig = { height: textureSize * scale, width: textureSize * scale, x: (textureSize) / 2, y: (textureSize) / 2 }
-
+        var i, container, equipScale;
+        if (typeof scale === "number") {
+            scale = [`${scale}`, `${scale}`];
+        }
+        else {
+            scale = scale.split(",")
+            if (scale.length === 1) scale[1] = scale[0]
+        }
+        if (equip) {
+            container = token.children.find(i => i.isSprite && i.texture.baseTexture.imageUrl.includes(token.data.img))
+            equipScale = 5
+            container.CTAcontainer = true
+            CTAtexture.orig = container.texture.orig
+        }
+        else {
+            container = token
+            CTAtexture.orig = { height: textureSize * parseFloat(scale[1]), width: textureSize * parseFloat(scale[0]), x: -textureSize, y: -textureSize }
+        }
         if (rotation === "rotation" && !update) {
             token.sortableChildren = true
             for (i = 0; i <= multiple - 1; i++) {
@@ -62,7 +78,6 @@ class CTA {
                 sprite.anchor.set(radius)
                 sprite.pivot.set(textureSize / 2)
                 sprite.position.set(textureSize / 2)
-                var i;
                 let icon = await token.addChild(sprite)
                 await icon.position.set(token.data.width * canvas.grid.w * xScale, token.data.height * canvas.grid.h * yScale)
                 const source = getProperty(icon._texture, "baseTexture.resource.source")
@@ -85,8 +100,14 @@ class CTA {
             token.sortableChildren = true
             let sprite = new PIXI.Sprite(CTAtexture)
             sprite.anchor.set(0.5)
-            let icon = await token.addChild(sprite)
-            await icon.position.set(token.data.width * canvas.grid.w * xScale, token.data.height * canvas.grid.h * yScale)
+            let icon = await container.addChild(sprite)
+            if (!equip) {
+                await icon.position.set(token.data.width * canvas.grid.w * xScale, token.data.height * canvas.grid.h * yScale)
+            } else {
+                let xPos = container.texture.width * xScale - (container.texture.width / 2)
+                let yPos = container.texture.height * yScale - (container.texture.height / 2)
+                await icon.position.set(xPos, yPos)
+            }
             const source = getProperty(icon._texture, "baseTexture.resource.source")
             if (source && (source.tagName === "VIDEO")) {
                 source.loop = true;
@@ -188,8 +209,12 @@ class CTA {
         let animFlag = !!actorFlags.find(i => i.name === name)
         if (!token) token = canvas.tokens.controlled[0]
         let hexColour = oldData?.tint?.toString(16).padStart(6, '0').toUpperCase() || "FFFFFF"
+        let oldX = typeof oldData?.xScale === "number" ? oldData.xScale : 0.5
+        let oldY = typeof oldData?.yScale === "number" ? oldData.yScale : 0.5
+
+
         let dialog = await new Dialog({
-            
+
             title: "Pick Animation Effects",
             content: `
             <style> 
@@ -218,7 +243,7 @@ class CTA {
         <div class="form-group">
                     <label for="scale"><span>Scale:</span>
                     <span class="units">(compared to token)</span></label>
-                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale || 1}" required></input>
+                    <input id="scale" name="scale" type="text" value= "${oldData?.scale || "1"}" required></input>
             </div>
         <div class="form-group">
             <label for="rotation">Static Image: </label>
@@ -241,11 +266,11 @@ class CTA {
             </div>
         <div class="form-group">
             <label for="xScale">Position on X scale: </label>
-            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale || 0.5}" required></input>
+            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldX}" required></input>
         </div>
         <div class="form-group">
             <label for="yScale">Position on Y scale: </label>
-            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale || 0.5}" required></input>
+            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldY}" required></input>
         </div>
         <div class="form-group">
             <label for="opacity">Opacity: </label>
@@ -263,6 +288,10 @@ class CTA {
             <label for="pushActor">Permanent on Actor: </label>
             <input id="pushActor" name="pushActor" type="checkbox" ${animFlag === true ? 'checked' : ''}></input>
         </div>
+        <div class="form-group">
+            <label for="equip">Apply as Equipment: </label>
+            <input id="equip" name="equip" type="checkbox" ${oldData?.equip === true ? 'checked' : ''}></input>
+        </div>
         
 `,
             buttons: {
@@ -271,7 +300,7 @@ class CTA {
                     callback: (html) => {
                         let path = OGpath ? OGpath : html.find("#path")[0].value
                         let name = html.find("#name")[0].value
-                        let scale = Number(html.find("#scale")[0].value)
+                        let scale = html.find("#scale")[0].value
                         let speed = Number(html.find("#speed")[0].value)
                         let rotation = html.find("#rotation")[0].checked ? "static" : "rotation"
                         let pushActor = html.find("#pushActor")[0].checked
@@ -282,6 +311,7 @@ class CTA {
                         let tint = parseInt(html.find("#tint")[0].value.substr(1), 16)
                         let belowToken = html.find("#belowToken")[0].checked
                         let radius = Number(html.find("#radius")[0].value) * 2
+                        let equip = html.find("#equip")[0].checked
                         let textureData = {
                             texturePath: path,
                             scale: scale,
@@ -293,7 +323,8 @@ class CTA {
                             opacity: opacity,
                             tint: tint,
                             belowToken: belowToken,
-                            radius: radius
+                            radius: radius,
+                            equip: equip
                         }
                         CTA.addAnimation(token, textureData, true, pushActor, name, true)
                     }
@@ -356,6 +387,8 @@ class CTA {
      */
     static async resetTweens(token) {
         let CTAtweens = token.children.filter(c => c.CTA === true)
+        let equipTweens = token.children.find(c => c.CTAcontainer)?.children
+        CTAtweens = CTAtweens.concat(equipTweens)
         for (let child of CTAtweens) {
             TweenMax.killTweensOf(child)
             child.destroy()
@@ -388,7 +421,8 @@ class CTA {
                 belowToken: ${data.textureData.belowToken},
                 radius: ${data.textureData.radius},
                 opacity: ${data.textureData.opacity},
-                tint: ${data.textureData.tint}
+                tint: ${data.textureData.tint},
+                equip: ${data.textureData.equip}
             }
             CTA.addAnimation(token, textureData, true, false, "${data.name}", false)
             `,
@@ -459,12 +493,12 @@ class CTA {
             });
         }
     }
-/**
- * Remove an effect from selected token
- * @param {Object} token Token to act upon
- * @param {String} animId Id of the effect to remove
- * @param {Boolean} actorRemoval Remove from prototype token
- */
+    /**
+     * Remove an effect from selected token
+     * @param {Object} token Token to act upon
+     * @param {String} animId Id of the effect to remove
+     * @param {Boolean} actorRemoval Remove from prototype token
+     */
     static async removeAnim(token, animId, actorRemoval) {
         let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
         let removeAnim = anims.findIndex(i => i.id === animId)
@@ -586,10 +620,17 @@ Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
 
 Hooks.on('ready', () => {
     game.socket.on('module.Custom-Token-Animations', socketData => {
-        if(socketData.sceneId !== canvas.scene.id) return;
-        if(socketData.method === "apply"){
+        if (socketData.sceneId !== canvas.scene.id) return;
+        if (socketData.method === "apply") {
             let token = canvas.tokens.get(socketData.tokenId)
             CTA.resetTweens(token)
         }
     })
+})
+
+Hooks.on("updateToken", (scene, token, update) => {
+    if (!"rotation" in update) return;
+    let fullToken = canvas.tokens.get(token._id)
+    let icons = fullToken.children.filter(i => i.CTA)
+    icons.forEach(i => i.angle = update.rotation)
 })
