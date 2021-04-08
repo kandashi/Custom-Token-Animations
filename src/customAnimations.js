@@ -16,6 +16,7 @@ class CTA {
         });
         Hooks.on("createToken", (scene, token) => {
             let tokenInstance = canvas.tokens.get(token._id)
+            if(!tokenInstance) return;
             let flags = tokenInstance.getFlag("Custom-Token-Animations", "anim") ? tokenInstance.getFlag("Custom-Token-Animations", "anim") : []
             if (flags) CTA.AddTweens(tokenInstance)
         });
@@ -472,6 +473,15 @@ class CTA {
         CTA.resetTweens(token)
     }
 
+    static async removeAnimByName(token, animName, actorRemoval) {
+        let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
+        let removeAnim = anims.findIndex(i => i.name === animName)
+        anims.splice(removeAnim, 1)
+        if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
+        await token.setFlag("Custom-Token-Animations", "anim", anims)
+        CTA.resetTweens(token)
+    }
+
     /**
      * Prompt for full pathway
      * @param {Object} token token to update
@@ -566,6 +576,8 @@ class CTA {
             buttons: addButton
         }).render(true)
     }
+
+
 }
 
 Hooks.on('init', CTA.ready);
