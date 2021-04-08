@@ -236,7 +236,7 @@ class CTA {
         </div>
         <div class="form-group">
             <label for="multiple">Number of Copies: </label>
-            <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple || 1} " ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
+            <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple || 1}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
             </div>
         <div class="form-group">
             <label for="xScale">Position on X scale: </label>
