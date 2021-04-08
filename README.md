@@ -65,3 +65,9 @@ textureData = {
 ### getAnims(token)
 - Trigger the Update pathway for a specific token
 - Launches into the pickEffect => animationDialog
+
+### removeAnimByName(token, name, removeActor)
+- Remove an animation by its effect name
+- `token` is the token to remove from
+- `name` is the effect name to remove (case sensitive)
+- `removeActor` is a boolean to remove from the actor or not
