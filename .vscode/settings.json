@@ -5,6 +5,7 @@
         "Gpath",
         "PREFIXDIRSTR",
         "Tweens",
-        "anims"
+        "anims",
+        "gsap"
     ]
 }

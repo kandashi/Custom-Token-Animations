@@ -37,6 +37,7 @@ class CTA {
         })
     }
 
+    
     /**
      * 
      * @param {Object} token token to affect
@@ -62,7 +63,7 @@ class CTA {
                 sprite.position.set(textureSize / 2)
                 var i;
                 let icon = await token.addChild(sprite)
-                await icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
+                await icon.position.set(token.data.width * canvas.grid.w * xScale, token.data.height * canvas.grid.h * yScale)
                 const source = getProperty(icon._texture, "baseTexture.resource.source")
                 if (source && (source.tagName === "VIDEO")) {
                     source.loop = true;
@@ -84,7 +85,7 @@ class CTA {
             let sprite = new PIXI.Sprite(CTAtexture)
             sprite.anchor.set(0.5)
             let icon = await token.addChild(sprite)
-            await icon.position.set(token.data.height * canvas.grid.size * xScale, token.data.height * canvas.grid.size * yScale)
+            await icon.position.set(token.data.width * canvas.grid.w * xScale, token.data.height * canvas.grid.h * yScale)
             const source = getProperty(icon._texture, "baseTexture.resource.source")
             if (source && (source.tagName === "VIDEO")) {
                 source.loop = true;
@@ -133,6 +134,13 @@ class CTA {
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
         }
         if (update) CTA.resetTweens(token)
+
+        let socketData = {
+            method: "apply",
+            sceneId: canvas.scene.id,
+            tokenId: token.id
+        }
+        game.socket.emit('module.Custom-Token-Animations', socketData)
     }
 
 
@@ -562,3 +570,13 @@ class CTA {
 
 Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
+
+Hooks.on('ready', () => {
+    game.socket.on('module.Custom-Token-Animations', socketData => {
+        if(socketData.sceneId !== canvas.scene.id) return;
+        if(socketData.method === "apply"){
+            let token = canvas.tokens.get(socketData.tokenId)
+            CTA.resetTweens(token)
+        }
+    })
+})
