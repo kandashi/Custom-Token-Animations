@@ -177,7 +177,7 @@ class CTA {
         let actorFlags = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || []
         let animFlag = !!actorFlags.find(i => i.name === name)
         if (!token) token = canvas.tokens.controlled[0]
-        let hexColour = oldData?.tint.toString(16).padStart(6, '0').toUpperCase()
+        let hexColour = oldData?.tint?.toString(16).padStart(6, '0').toUpperCase() || "FFFFFF"
         let dialog = await new Dialog({
             
             title: "Pick Animation Effects",
@@ -203,12 +203,12 @@ class CTA {
             </div>
         <div class="form-group">
                     <label for="path">Image Path: </label>
-                    <input id="path" name="path" type="text" value= "${shortLeft(OGpath, 20)}"></input>
+                    <input id="path" name="path" type="text" value= "${shortLeft(OGpath, 20)}" required></input>
             </div>
         <div class="form-group">
                     <label for="scale"><span>Scale:</span>
                     <span class="units">(compared to token)</span></label>
-                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale || 1}"></input>
+                    <input id="scale" name="scale" type="number" step="0.1" value= "${oldData?.scale || 1}" required></input>
             </div>
         <div class="form-group">
             <label for="rotation">Static Image: </label>
@@ -231,19 +231,19 @@ class CTA {
             </div>
         <div class="form-group">
             <label for="xScale">Position on X scale: </label>
-            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale || 0.5}"></input>
+            <input id="xScale" name="xScale" type="number" placeholder="0 for far left, 1 for far right" value= "${oldData?.xScale || 0.5}" required></input>
         </div>
         <div class="form-group">
             <label for="yScale">Position on Y scale: </label>
-            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale || 0.5}"></input>
+            <input id="yScale" name="yScale" type="number" placeholder="0 for top, 1 for bottom" value= "${oldData?.yScale || 0.5}" required></input>
         </div>
         <div class="form-group">
             <label for="opacity">Opacity: </label>
-            <input id="opacity" name="opacity" type="number" min="0" max="1" value= "${oldData?.opacity || 1}"></input>
+            <input id="opacity" name="opacity" type="number" min="0" max="1" value= "${oldData?.opacity || 1}" required></input>
         </div>
         <div class="form-group">
                 <label for="tint">Asset Tint: </label>
-                <input type="color" id="tint" name="tint" value="#${hexColour || ""}">
+                <input type="color" id="tint" name="tint" value="#${hexColour || "FFFFFF"}">
             </div>
         <div class="form-group">
             <label for="belowToken">Render below Token: </label>
@@ -377,6 +377,8 @@ class CTA {
                 yScale: ${data.textureData.yScale},
                 belowToken: ${data.textureData.belowToken},
                 radius: ${data.textureData.radius},
+                opacity: ${data.textureData.opacity},
+                tint: ${data.textureData.tint}
             }
             CTA.addAnimation(token, textureData, true, false, "${data.name}", false)
             `,
@@ -454,7 +456,7 @@ class CTA {
  * @param {Boolean} actorRemoval Remove from prototype token
  */
     static async removeAnim(token, animId, actorRemoval) {
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
         let removeAnim = anims.findIndex(i => i.id === animId)
         anims.splice(removeAnim, 1)
         if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })

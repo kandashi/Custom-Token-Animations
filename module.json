@@ -4,7 +4,11 @@
 	"title": "Custom Token Animations", 
 	"description": "Custom Token Animations",
 	"author": "Kandashi",
+<<<<<<< Updated upstream
 	"version": "0.1.01",
+=======
+	"version": "0.1.03",
+>>>>>>> Stashed changes
 	"minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.9",
 	"scripts": [
