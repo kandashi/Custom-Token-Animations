@@ -4,8 +4,8 @@
 	"title": "Custom Token Animations", 
 	"description": "Custom Token Animations",
 	"author": "Kandashi",
-	"version": "0.1.06",
-  "minimumCoreVersion": "0.7.5",
+	"version": "0.1.08",
+    "minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.9",
 	"scripts": [
 		"greensock/dist/gsap.min.js",
