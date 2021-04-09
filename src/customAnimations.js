@@ -629,7 +629,7 @@ Hooks.on('ready', () => {
 })
 
 Hooks.on("updateToken", (scene, token, update) => {
-    if (!"rotation" in update) return;
+    if (!getProperty(update, "rotation")) return;
     let fullToken = canvas.tokens.get(token._id)
     let icons = fullToken.children.filter(i => i.CTA)
     icons.forEach(i => i.angle = update.rotation)
