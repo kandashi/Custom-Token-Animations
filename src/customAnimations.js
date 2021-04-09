@@ -387,7 +387,7 @@ class CTA {
      */
     static async resetTweens(token) {
         let CTAtweens = token.children.filter(c => c.CTA === true)
-        let equipTweens = token.children.find(c => c.CTAcontainer)?.children
+        let equipTweens = token.children.find(c => c.CTAcontainer)?.children || []
         CTAtweens = CTAtweens.concat(equipTweens)
         for (let child of CTAtweens) {
             TweenMax.killTweensOf(child)
