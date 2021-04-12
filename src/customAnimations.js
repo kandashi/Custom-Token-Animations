@@ -12,6 +12,7 @@ class CTA {
         });
         Hooks.on("preDeleteToken", (scene, token) => {
             let deleteToken = canvas.tokens.get(token._id)
+            if (!deleteToken) return;
             TweenMax.killTweensOf(deleteToken.children)
         });
         Hooks.on("createToken", (scene, token) => {
@@ -91,7 +92,7 @@ class CTA {
                 icon.tint = tint;
                 if (belowToken) icon.zIndex = -1
                 icon.angle = i * (360 / multiple)
-                let tween = TweenMax.to(icon, speed, { angle: (360 + icon.angle), repeat: -1, ease: Linear.easeNone});
+                let tween = TweenMax.to(icon, speed, { angle: (360 + icon.angle), repeat: -1, ease: Linear.easeNone });
                 CTA.canvasTweens.push(tween)
 
             }
@@ -158,12 +159,14 @@ class CTA {
         }
         if (update) CTA.resetTweens(token)
 
-        let socketData = {
-            method: "apply",
-            sceneId: canvas.scene.id,
-            tokenId: token.id
+        if (game.user === game.users.find((u) => u.isGM && u.active)) {
+            let socketData = {
+                method: "apply",
+                sceneId: canvas.scene.id,
+                tokenId: token.id
+            }
+            game.socket.emit('module.Custom-Token-Animations', socketData)
         }
-        game.socket.emit('module.Custom-Token-Animations', socketData)
     }
 
 
@@ -386,7 +389,7 @@ class CTA {
      * @returns 
      */
     static async resetTweens(token) {
-        let CTAtweens = token.children.filter(c => c.CTA === true)
+        let CTAtweens = token.children?.filter(c => c.CTA === true)
         let equipTweens = token.children.find(c => c.CTAcontainer)?.children || []
         CTAtweens = CTAtweens.concat(equipTweens)
         for (let child of CTAtweens) {
@@ -481,13 +484,13 @@ class CTA {
     // Add button to sidebar
     static getSceneControlButtons(buttons) {
         let tokenButton = buttons.find(b => b.name == "token")
-
+        let playerPermissions = game.settings.get("Custom-Token-Animations", "playerPermissions") === true ? true : game.user.isGM
         if (tokenButton) {
             tokenButton.tools.push({
                 name: "cta-anim",
                 title: "Add Animation",
                 icon: "fas fa-spinner",
-                visible: game.user.isGM,
+                visible: playerPermissions,
                 onClick: () => CTA.getAnims(),
                 button: true
             });
@@ -633,4 +636,16 @@ Hooks.on("updateToken", (scene, token, update) => {
     let fullToken = canvas.tokens.get(token._id)
     let icons = fullToken.children.filter(i => i.CTA)
     icons.forEach(i => i.angle = update.rotation)
+})
+
+
+Hooks.on('init', () => {
+    game.settings.register("Custom-Token-Animations", "playerPermissions", {
+        name: "Player Permissions",
+        hint: "Allow players to alter their own CTA effects",
+        scope: "world",
+        config: true,
+        default: false,
+        type: Boolean,
+    });
 })
