@@ -55,7 +55,7 @@ class CTA {
         let newID = oldID || randomID()
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
-        var i, container, equipScale;
+        var i, container;
         if (typeof scale === "number") {
             scale = [`${scale}`, `${scale}`];
         }
@@ -64,10 +64,9 @@ class CTA {
             if (scale.length === 1) scale[1] = scale[0]
         }
         if (equip) {
-            container = token.children.find(i => i.isSprite && i.texture.baseTexture.imageUrl.includes(token.data.img))
-            equipScale = 5
+            container = token.children.find(i => i.isSprite && i.texture.baseTexture?.imageUrl?.includes(token.data.img))
             container.CTAcontainer = true
-            CTAtexture.orig = container.texture.orig
+            CTAtexture.orig = { height: textureSize * parseFloat(scale[1]) / container.scale.x, width: textureSize * parseFloat(scale[0]) / container.scale.y, x: -textureSize, y: -textureSize }
         }
         else {
             container = token
