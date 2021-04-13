@@ -34,7 +34,7 @@ class CTA {
         Hooks.on("updateToken", (_scene, token, update) => {
             if ("height" in update || "width" in update) {
                 let fullToken = canvas.tokens.get(token._id)
-                CTA.resetTweens(fullToken)
+                CTA.resetTweens(fullToken, false)
             }
         })
     }
@@ -48,9 +48,11 @@ class CTA {
      * @param {Boolean} pushActor permanent effect on the actors token, persists through re-placing actor
      * @param {String} name name of the effect, unique per actor/token
      * @param {Boolean} update replace effect by name
+     * @param {String} id id of the flag
      */
-    static async addAnimation(token, textureData, pushToken, pushActor, name, update) {
+    static async addAnimation(token, textureData, pushToken, pushActor, name, update, oldID) {
         let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
+        let newID = oldID || randomID()
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
         var i, container, equipScale;
@@ -88,6 +90,7 @@ class CTA {
                     game.video.play(source);
                 }
                 icon.CTA = true;
+                icon.CTAid = newID
                 icon.alpha = opacity;
                 icon.tint = tint;
                 if (belowToken) icon.zIndex = -1
@@ -116,6 +119,7 @@ class CTA {
                 game.video.play(source);
             }
             icon.CTA = true
+            icon.CTAid = newID
             icon.alpha = opacity;
             icon.tint = tint;
             icon.angle = token.data.rotation
@@ -136,7 +140,7 @@ class CTA {
             flags.push({
                 name: name !== undefined ? name : flags.length,
                 textureData: textureData,
-                id: randomID()
+                id: newID
             })
             await token.setFlag("Custom-Token-Animations", "anim", flags)
         }
@@ -153,20 +157,19 @@ class CTA {
             flags.push({
                 name: name !== undefined ? name : flags.length,
                 textureData: textureData,
-                id: randomID()
+                id: newID
             })
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
         }
-        if (update) CTA.resetTweens(token)
+        if (update) CTA.resetTweens(token,false )
 
-        if (game.user === game.users.find((u) => u.isGM && u.active)) {
-            let socketData = {
-                method: "apply",
-                sceneId: canvas.scene.id,
-                tokenId: token.id
-            }
-            game.socket.emit('module.Custom-Token-Animations', socketData)
+        if (this.isSocket) return;
+        let socketData = {
+            method: "apply",
+            sceneId: canvas.scene.id,
+            tokenId: token.id
         }
+        game.socket.emit('module.Custom-Token-Animations', socketData)
     }
 
 
@@ -182,7 +185,7 @@ class CTA {
             let flag = testToken.getFlag("Custom-Token-Animations", "anim")
             if (!flag) continue;
             flag.forEach(f => {
-                CTA.addAnimation(testToken, f.textureData, false, false, f.name)
+                CTA.addAnimation(testToken, f.textureData, false, false, f.name, false, f.id)
             })
         }
     }
@@ -329,7 +332,7 @@ class CTA {
                             radius: radius,
                             equip: equip
                         }
-                        CTA.addAnimation(token, textureData, true, pushActor, name, true)
+                        CTA.addAnimation(token, textureData, true, pushActor, name, true, null)
                     }
                 }
             }
@@ -380,7 +383,7 @@ class CTA {
             }
         }
         await token.setFlag("Custom-Token-Animations", "anim", anims)
-        CTA.resetTweens(token)
+        CTA.resetTweens(token, false)
     }
 
     /**
@@ -388,7 +391,8 @@ class CTA {
      * @param {Object} token Token to update
      * @returns 
      */
-    static async resetTweens(token) {
+    static async resetTweens(token, isSocket) {
+        this.isSocket = isSocket
         let CTAtweens = token.children?.filter(c => c.CTA === true)
         let equipTweens = token.children.find(c => c.CTAcontainer)?.children || []
         CTAtweens = CTAtweens.concat(equipTweens)
@@ -400,7 +404,7 @@ class CTA {
         let flag = token.getFlag("Custom-Token-Animations", "anim")
         if (!flag) return;
         flag.forEach(f => {
-            CTA.addAnimation(token, f.textureData, false, false, f.name)
+            CTA.addAnimation(token, f.textureData, false, false, f.name, false, f.id)
         })
     }
 
@@ -415,7 +419,7 @@ class CTA {
             command: `
             let textureData = {
                 texturePath: "${data.textureData.texturePath}",
-                scale: ${data.textureData.scale},
+                scale: "${data.textureData.scale}",
                 speed: ${data.textureData.speed},
                 multiple: ${data.textureData.multiple},
                 rotation: "${data.textureData.rotation}",
@@ -427,7 +431,7 @@ class CTA {
                 tint: ${data.textureData.tint},
                 equip: ${data.textureData.equip}
             }
-            CTA.addAnimation(token, textureData, true, false, "${data.name}", false)
+            CTA.addAnimation(token, textureData, true, false, "${data.name}", false, null)
             `,
             img: image,
             name: `CTA ${data.name}`,
@@ -478,7 +482,7 @@ class CTA {
         let updateValue = parseInt(updateAnim.multiple) + parseInt(value)
         updateAnim.multiple = updateValue;
         await token.setFlag("Custom-Token-Animations", "anim", anims)
-        CTA.resetTweens(token)
+        CTA.resetTweens(token, false)
     }
 
     // Add button to sidebar
@@ -496,28 +500,57 @@ class CTA {
             });
         }
     }
+
     /**
      * Remove an effect from selected token
      * @param {Object} token Token to act upon
      * @param {String} animId Id of the effect to remove
      * @param {Boolean} actorRemoval Remove from prototype token
+     *      * @param {Boolean} fadeOut optional fade out
      */
-    static async removeAnim(token, animId, actorRemoval) {
+    static async removeAnim(token, animId, actorRemoval, fadeOut) {
         let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
         let removeAnim = anims.findIndex(i => i.id === animId)
-        anims.splice(removeAnim, 1)
-        if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
-        await token.setFlag("Custom-Token-Animations", "anim", anims)
-        CTA.resetTweens(token)
+        let oldAnim = anims.splice(removeAnim, 1)
+        let icon = token.children.find(c => c.CTAid = oldAnim[0].id)
+        let fade = fadeOut || game.settings.get("Custom-Token-Animations", "fadeOut")
+        if (fade) {
+            TweenMax.to(icon, 2, { alpha: 0, onComplete: CTA._FinalRemoval, onCompleteParams: [token, actorRemoval, anims]})
+        }
+        else { CTA._FinalRemoval(token, actorRemoval, anims) }
+
     }
 
-    static async removeAnimByName(token, animName, actorRemoval) {
+    /**
+     * 
+     * @param {Object} token token to remove from
+     * @param {String} animName name of animation to remove
+     * @param {Boolean} actorRemoval remove from actor
+     * @param {Boolean} fadeOut optional fade out
+     */
+    static async removeAnimByName(token, animName, actorRemoval, fadeOut) {
         let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
         let removeAnim = anims.findIndex(i => i.name === animName)
-        anims.splice(removeAnim, 1)
+        let oldAnim = anims.splice(removeAnim, 1)
+        let icon = token.children.find(c => c.CTAid = oldAnim[0].id)
+        let fade = fadeOut || game.settings.get("Custom-Token-Animations", "fadeOut")
+        if (fade) {
+            TweenMax.to(icon, 2, { alpha: 0, onComplete: CTA._FinalRemoval, onCompleteParams: [token, actorRemoval, anims]})
+        }
+        else { CTA._FinalRemoval(token, actorRemoval, anims) }
+
+    }
+
+    /**
+     * 
+     * @param {Object} token token to remove from
+     * @param {Boolean} actorRemoval remove from actor
+     * @param {Object} anims anims to set as new flags
+     */
+    static async _FinalRemoval(token, actorRemoval, anims) {
         if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
         await token.setFlag("Custom-Token-Animations", "anim", anims)
-        CTA.resetTweens(token)
+        CTA.resetTweens(token, false)
     }
 
     /**
@@ -615,6 +648,19 @@ class CTA {
         }).render(true)
     }
 
+    /**
+     * 
+     * @param {Object <token5e>} token 
+     * @param {String} name 
+     */
+    static hasAnim(token, name) {
+        let anims = token.getFlag("Custom-Token-Animations", "anim")
+        if (!anims) return false;
+        for (let testAnim of anims) {
+            if (testAnim.name === name) return true;
+        }
+        return false;
+    }
 
 }
 
@@ -626,7 +672,7 @@ Hooks.on('ready', () => {
         if (socketData.sceneId !== canvas.scene.id) return;
         if (socketData.method === "apply") {
             let token = canvas.tokens.get(socketData.tokenId)
-            CTA.resetTweens(token)
+            CTA.resetTweens(token, true)
         }
     })
 })
@@ -646,6 +692,14 @@ Hooks.on('init', () => {
         scope: "world",
         config: true,
         default: false,
+        type: Boolean,
+    });
+    game.settings.register("Custom-Token-Animations", "fadeOut", {
+        name: "Fade Animations",
+        hint: "Animations will fade to opaque before removal",
+        scope: "world",
+        config: true,
+        default: true,
         type: Boolean,
     });
 })

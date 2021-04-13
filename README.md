@@ -7,6 +7,8 @@ This adds the option to add custom defined icons onto tokens. Add static icons, 
 There are several macro commands to alter these traits but the simplest option is to use the "dotted circle" icon in the token control bar with a token selected.
 ![Toolbar](https://github.com/kandashi/Custom-Token-Animations/blob/main/cta%20demo.PNG?raw=true)
 
+When removed effects will slowly fade over 2 seconds.
+
 ## Animation Effects Breakdown
 - Name : name of the effect, must be unique to that token, an update with the same name will overwrite the previous effect
 - Image Path: path to the image to be used
@@ -23,53 +25,5 @@ There are several macro commands to alter these traits but the simplest option i
 - Permanent on Actor: Permanently add this asset to the actors token, useful for persisting between scenes
 - Apply as Equipment: Will now match rotate around the center point of the token to match the token image
 
-## API/Macro Commands
-Preface these with `CTA.` 
-### pickEffect(token)
-- Trigger the asset selection popup
-- `token` is the token to add the effect onto
 
-### addAnimation(token, textureData, pushToken, pushActor, name, update)
-- Individually add an animation to a token
-- `token` is the token 
-- `pushToken` set to true
-- `pushActor` true = permanently apply to actor
-- `name` is the effect name
-- `update` set to false unless you are overwriting an effect
-- `textureData` holds the details of the data:
-```
-textureData = {
-    texturePath: string
-    scale: number
-    speed: number
-    multiple: number value*2
-    rotation: "static" or "rotation"
-    xScale: number
-    yScale: number
-    opacity: number, 0-1
-    tint: decimal color code
-    belowToken: boolean
-    radius: number
-    equip: boolean
-    }
-```
-
-### animationDialog(OGpath, token, oldData, name)
-- Trigger the main effect creation dialog
-- `OGPath` is the path to the effect, optional
-- `token` is the token 
-- `oldData` is optional, can update an existing effect
-- `name` is optional, can update an existing effect
-
-### resetTweens(token)
-- Reset the effects on a specific token
-
-### getAnims(token)
-- Trigger the Update pathway for a specific token
-- Launches into the pickEffect => animationDialog
-
-### removeAnimByName(token, name, removeActor)
-- Remove an animation by its effect name
-- `token` is the token to remove from
-- `name` is the effect name to remove (case sensitive)
-- `removeActor` is a boolean to remove from the actor or not
+Too see the macro list, refer to the API.md
