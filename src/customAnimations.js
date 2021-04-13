@@ -144,7 +144,7 @@ class CTA {
             await token.setFlag("Custom-Token-Animations", "anim", flags)
         }
         if (pushActor) {
-            let flagData = getProperty(token, "actor.data.token.flagsCustom-Token-Animations.anim") || []
+            let flagData = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || []
             let flags = Array.from(flagData)
             let duplicate = flags.find(i => i.name === name)
             if (duplicate) {
