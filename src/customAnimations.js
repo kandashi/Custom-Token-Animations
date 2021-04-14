@@ -51,6 +51,19 @@ class CTA {
      * @param {String} id id of the flag
      */
     static async addAnimation(token, textureData, pushToken, pushActor, name, update, oldID) {
+        if(!token.owner){
+            let socketData = {
+                method: "GMExecute",
+                sceneId: canvas.scene.id,
+                tokenId: token.id,
+                textureData: textureData,
+                pushActor: pushActor,
+                name: name,
+                update: update,
+                oldID: oldID
+            }
+            game.socket.emit('module.Custom-Token-Animations', socketData)
+        }
         let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
         let newID = oldID || randomID()
         let CTAtexture = await loadTexture(texturePath)
@@ -181,14 +194,17 @@ class CTA {
         if (token) testArray.push(token)
         else testArray = canvas.tokens.placeables
         for (let testToken of testArray) {
-            let flag = testToken.getFlag("Custom-Token-Animations", "anim")
-            if (!flag) continue;
-            flag.forEach(f => {
+            let tokenFlags = testToken.getFlag("Custom-Token-Animations", "anim") || []
+            let actorFlags = getProperty(testToken.actor.data, "token.flags.Custom-Token-Animations.anim") || []
+            let totalFlags = tokenFlags.concat(actorFlags)
+            let newFlag = totalFlags.reduce((map, obj) => map.set(obj.id, obj), new Map()).values()
+            if (!newFlag) continue;
+            Array.from(newFlag).forEach(f => {
                 CTA.addAnimation(testToken, f.textureData, false, false, f.name, false, f.id)
             })
         }
     }
-
+    
     /**
      * 
      * @param {String} OGpath original texture path
@@ -550,6 +566,13 @@ class CTA {
         if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
         await token.setFlag("Custom-Token-Animations", "anim", anims)
         CTA.resetTweens(token, false)
+        let socketData = {
+            method: "apply",
+            sceneId: canvas.scene.id,
+            tokenId: token.id
+        }
+        game.socket.emit('module.Custom-Token-Animations', socketData)
+
     }
 
     /**
@@ -672,6 +695,13 @@ Hooks.on('ready', () => {
         if (socketData.method === "apply") {
             let token = canvas.tokens.get(socketData.tokenId)
             CTA.resetTweens(token, true)
+        }
+        if(socketData.method === "GMExecute"){
+            if(game.user = game.users.find((u) => u.isGM && u.active)){
+                let token = canvas.tokens.get(socketData.tokenId)
+                CTA.addAnimation(token, socketData.textureData, true, socketData.pushActor, socketData.name, socketData.update, socketData.oldID)
+            }
+
         }
     })
 })
