@@ -51,19 +51,7 @@ class CTA {
      * @param {String} id id of the flag
      */
     static async addAnimation(token, textureData, pushToken, pushActor, name, update, oldID) {
-        if(!token.owner){
-            let socketData = {
-                method: "GMExecute",
-                sceneId: canvas.scene.id,
-                tokenId: token.id,
-                textureData: textureData,
-                pushActor: pushActor,
-                name: name,
-                update: update,
-                oldID: oldID
-            }
-            game.socket.emit('module.Custom-Token-Animations', socketData)
-        }
+        
         let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
         let newID = oldID || randomID()
         let CTAtexture = await loadTexture(texturePath)
@@ -137,7 +125,17 @@ class CTA {
             icon.angle = token.data.rotation
             if (belowToken) icon.zIndex = -1
         }
-
+        if (this.isSocket) return;
+        let socketData = {
+            method: "apply",
+            sceneId: canvas.scene.id,
+            tokenId: token.id
+        }
+        game.socket.emit('module.Custom-Token-Animations', socketData)
+        if (update) CTA.resetTweens(token,false )
+        if(!token.owner){
+            return;
+        }
         if (pushToken) {
             //let flags = token.getFlag("Custom-Token-Animations", "anim") ? token.getFlag("Custom-Token-Animations", "anim") : []
             let flagData = token.getFlag("Custom-Token-Animations", "anim") || []
@@ -172,16 +170,7 @@ class CTA {
                 id: newID
             })
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": flags })
-        }
-        if (update) CTA.resetTweens(token,false )
-
-        if (this.isSocket) return;
-        let socketData = {
-            method: "apply",
-            sceneId: canvas.scene.id,
-            tokenId: token.id
-        }
-        game.socket.emit('module.Custom-Token-Animations', socketData)
+        }        
     }
 
 
