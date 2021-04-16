@@ -5,12 +5,25 @@
 	"description": "Custom Token Animations",
 	"author": "Kandashi",
 	"version": "0.1.14",
-  "minimumCoreVersion": "0.7.5",
+  	"minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.9",
 	"scripts": [
 		"greensock/dist/gsap.min.js",
-		"src/customAnimations.js"
+		"src/CTA.js"
 	],
+	"dependencies": [
+		{
+		"name": "socketlib",
+		"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-socketlib/master/module.json"
+		}
+	],
+	"languages": [
+		{
+		  "lang": "en",
+		  "name": "English",
+		  "path": "languages/en.json"
+		}
+	  ],
 	"socket": true,
 	"url": "https://github.com/kandashi/Custom-Token-Animations",
     "manifest": "https://raw.githubusercontent.com/kandashi/Custom-Token-Animations/main/module.json",
