@@ -10,6 +10,7 @@ There are several macro commands to alter these traits but the simplest option i
 When removed effects will slowly fade over 2 seconds.
 
 ## Animation Effects Breakdown
+
 - Name : name of the effect, must be unique to that token, an update with the same name will overwrite the previous effect
 - Image Path: path to the image to be used
 - Scale: how large the individual asset should be compared to the token its applied to (1 = same size), this can be a single digit or two matching x/y eg. "1,2" would result in a tall, narrow asset  (negative values will flip in that axis)
@@ -27,3 +28,9 @@ When removed effects will slowly fade over 2 seconds.
 
 
 Too see the macro list, refer to the API.md
+
+## [Changelog](./changelog.md)
+
+## Issues
+
+Any issues, bugs, or feature requests are always welcome to be reported directly to the [Issue Tracker](https://github.com/kandashi/Custom-Token-Animations/issues ), or using the [Bug Reporter Module](https://foundryvtt.com/packages/bug-reporter/).
