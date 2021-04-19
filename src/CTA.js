@@ -147,7 +147,7 @@ class CTA {
             }
         })
         Hooks.on("updateToken", (_scene, token, update) => {
-            if ("height" in update || "width" in update) {
+            if ("height" in update || "width" in update || "img" in update) {
                 let fullToken = canvas.tokens.get(token._id)
                 CTA.AddTweens(fullToken)
             }
@@ -572,7 +572,7 @@ class CTA {
 
     // Add button to sidebar
     static getSceneControlButtons(buttons) {
-        if (!game.modules.get("test")?.active) {
+        if (!game.modules.get("socketlib")?.active) {
             ui.notifications.error(game.i18n.format("CTA.SocketLib_warn"))
             return;
         }
