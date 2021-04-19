@@ -12,7 +12,7 @@ class CTArender {
         if (duplicate) { await CTArender.DeleteSpecificAnim, tokenID, duplicate.id }
         let token = canvas.tokens.get(tokenID)
         let { textureData, name, id } = flagData;
-        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
+        let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip, lock } = textureData
 
         let CTAtexture = await loadTexture(texturePath)
         const textureSize = token.data.height * canvas.grid.size;
@@ -51,13 +51,13 @@ class CTArender {
                 }
                 icon.CTA = true;
                 icon.CTAid = flagData.id;
+                icon.CTAlock = lock;
                 icon.alpha = opacity;
                 icon.tint = tint;
                 if (belowToken) { icon.zIndex = -1 }
                 else { icon.zIndex = 1000 }
                 icon.angle = i * (360 / multiple)
                 let tween = TweenMax.to(icon, speed, { angle: (360 + icon.angle), repeat: -1, ease: Linear.easeNone });
-
             }
         }
         if (rotation === "static") {
@@ -80,6 +80,7 @@ class CTArender {
             }
             icon.CTA = true
             icon.CTAid = flagData.id;
+            icon.CTAlock = lock;
             icon.alpha = opacity;
             icon.tint = tint;
             icon.angle = token.data.rotation
@@ -381,9 +382,14 @@ class CTA {
             <input id="pushActor" name="pushActor" type="checkbox" ${animFlag === true ? 'checked' : ''}></input>
         </div>
         <div class="form-group">
-            <label for="equip"><span>${game.i18n.format("CTA.PermanentActor_hint")}:</span>
-            <span class="units">${game.i18n.format("CTA.PermanentActor_hint")}</span> </label>
+            <label for="equip"><span>${game.i18n.format("CTA.ApplyEquipment")}:</span>
+            <span class="units">${game.i18n.format("CTA.ApplyEquipment_hint")}</span> </label>
             <input id="equip" name="equip" type="checkbox" ${oldData?.equip === true ? 'checked' : ''}></input>
+        </div>
+        <div class="form-group">
+            <label for="lock"><span>${game.i18n.format("CTA.NoRotation")}:</span>
+            <span class="units">${game.i18n.format("CTA.NoRotation_hint")}</span> </label>
+            <input id="lock" name="lock" type="checkbox" ${oldData?.lock === true ? 'checked' : ''}></input>
         </div>
     </form>
         `
@@ -410,6 +416,7 @@ class CTA {
                         let belowToken = html.find("#belowToken")[0].checked
                         let radius = Number(html.find("#radius")[0].value) * 2
                         let equip = html.find("#equip")[0].checked
+                        let lock = html.find("#lock")[0].checked
                         let textureData = {
                             texturePath: path,
                             scale: scale,
@@ -422,7 +429,8 @@ class CTA {
                             tint: tint,
                             belowToken: belowToken,
                             radius: radius,
-                            equip: equip
+                            equip: equip,
+                            lock: lock
                         }
                         CTA.addAnimation(token, textureData, pushActor, name)
                     }
@@ -444,6 +452,7 @@ class CTA {
                         let belowToken = html.find("#belowToken")[0].checked
                         let radius = Number(html.find("#radius")[0].value) * 2
                         let equip = html.find("#equip")[0].checked
+                        let lock = html.find("#lock")[0].checked
                         let oldData = {
                             texturePath: path,
                             scale: scale,
@@ -456,7 +465,8 @@ class CTA {
                             tint: tint,
                             belowToken: belowToken,
                             radius: radius,
-                            equip: equip
+                            equip: equip,
+                            lock: lock
                         }
                         CTA.pickEffect(token, oldData)
                     }
@@ -611,7 +621,8 @@ class CTA {
                 radius: ${data.textureData.radius},
                 opacity: ${data.textureData.opacity},
                 tint: ${data.textureData.tint},
-                equip: ${data.textureData.equip}
+                equip: ${data.textureData.equip},
+                lock : ${data.textureData.lock}
             }
             CTA.addAnimation(token, textureData, true, false, "${data.name}", false, null)
             `,
@@ -655,7 +666,7 @@ Hooks.once("socketlib.ready", () => {
 Hooks.on("updateToken", (scene, token, update) => {
     if (!getProperty(update, "rotation")) return;
     let fullToken = canvas.tokens.get(token._id)
-    let icons = fullToken.children.filter(i => i.CTA)
+    let icons = fullToken.children.filter(i => i.CTA && !i.CTAlock)
     icons.forEach(i => i.angle = update.rotation)
 })
 
