@@ -9,6 +9,8 @@ There are several macro commands to alter these traits but the simplest option i
 
 When removed effects will slowly fade over 2 seconds.
 
+Custom Token Animations requires the use of the SocketLib module (https://foundryvtt.com/packages/socketlib)
+
 ## Animation Effects Breakdown
 - Name : name of the effect, must be unique to that token, an update with the same name will overwrite the previous effect
 - Image Path: path to the image to be used
@@ -26,4 +28,4 @@ When removed effects will slowly fade over 2 seconds.
 - Apply as Equipment: Will now match rotate around the center point of the token to match the token image
 
 
-Too see the macro list, refer to the API.md
+To see the macro list, refer to the API.md
