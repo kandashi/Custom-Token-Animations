@@ -9,7 +9,7 @@ class CTArender {
      * @param {*} flagData 
      */
     static async RenderAnim(tokenID, flagData, duplicate) {
-        if(duplicate) {await CTArender.DeleteSpecificAnim, tokenID, duplicate.id}
+        if (duplicate) { await CTArender.DeleteSpecificAnim, tokenID, duplicate.id }
         let token = canvas.tokens.get(tokenID)
         let { textureData, name, id } = flagData;
         let { texturePath, scale, speed, multiple, rotation, xScale, yScale, belowToken, radius, opacity, tint, equip } = textureData
@@ -94,9 +94,9 @@ class CTArender {
      * @param {Object} token 
      * @param {String} id 
      */
-    static async FadeAnim(tokenID, id){
+    static async FadeAnim(tokenID, id) {
         let token = canvas.tokens.get(tokenID)
-        let icon = token.children?.filter( c => c.CTAid === id)
+        let icon = token.children?.filter(c => c.CTAid === id)
         TweenMax.to(icon, 2, { alpha: 0, onComplete: CTArender.DeleteSpecificAnim, onCompleteParams: [tokenID, id] })
     }
 
@@ -105,10 +105,10 @@ class CTArender {
      * @param {Object} token 
      * @param {String} id 
      */
-    static DeleteSpecificAnim(tokenID, id){
+    static DeleteSpecificAnim(tokenID, id) {
         let token = canvas.tokens.get(tokenID)
-        let icons = token.children?.filter( c => c.CTAid === id)
-        for( let icon of icons) {
+        let icons = token.children?.filter(c => c.CTAid === id)
+        for (let icon of icons) {
             TweenMax.killTweensOf(icon)
             icon.destroy()
         }
@@ -119,6 +119,7 @@ class CTArender {
 class CTA {
 
     static ready() {
+
         Hooks.on("canvasInit", async () => {
             Hooks.once("canvasPan", () => {
                 CTA.AddTweens()
@@ -151,6 +152,7 @@ class CTA {
                 CTA.AddTweens(fullToken)
             }
         })
+
     }
 
     static AddTweens(token) {
@@ -185,7 +187,7 @@ class CTA {
 
 
     static addAnimation(token, textureData, pushActor, name, oldID) {
-        if(typeof token === "string") token = canvas.tokens.get(token)
+        if (typeof token === "string") token = canvas.tokens.get(token)
         if (!game.user.isGM) {
             CTAsocket.executeAsGM("addAnimation", token.id, textureData, pushActor, name, oldID)
             return;
@@ -200,8 +202,8 @@ class CTA {
     }
 
     static async removeAnim(token, animId, actorRemoval, fadeOut) {
-        if(typeof token === "string") token = canvas.tokens.get(token) 
-        if(!game.user.isGM){
+        if (typeof token === "string") token = canvas.tokens.get(token)
+        if (!game.user.isGM) {
             CTAsocket.executeAsGM("removeById", token.id, animId, actorRemoval, fadeOut);
             return;
         }
@@ -209,16 +211,16 @@ class CTA {
         let actorFlags = Array.from(getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || [])
 
         let tokenAnimRemove = tokenFlags.findIndex(i => i.id === animId)
-        tokenFlags.splice(tokenAnimRemove, 1)  
-        await token.update({"flags.Custom-Token-Animations": tokenFlags})
-        if(actorRemoval){
+        tokenFlags.splice(tokenAnimRemove, 1)
+        await token.update({ "flags.Custom-Token-Animations": tokenFlags })
+        if (actorRemoval) {
             let actorAnimRemove = actorFlags.findIndex(i => i.id === animId)
             actorFlags.splice(actorAnimRemove, 1)
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": actorFlags })
         }
         let fade = fadeOut || game.settings.get("Custom-Token-Animations", "fadeOut")
 
-        if(fade){
+        if (fade) {
             CTAsocket.executeForEveryone("fadeOut", token.id, animId)
         }
         else {
@@ -226,9 +228,9 @@ class CTA {
         }
     }
 
-    static removeAnimByName(token, animName, actorRemoval, fadeOut){
-        if(typeof token === "string") token = canvas.tokens.get(token) 
-        if(!game.user.isGM){
+    static removeAnimByName(token, animName, actorRemoval, fadeOut) {
+        if (typeof token === "string") token = canvas.tokens.get(token)
+        if (!game.user.isGM) {
             CTAsocket.executeAsGM("removeByName", token.id, animName, actorRemoval, fadeOut);
             return;
         }
@@ -258,7 +260,7 @@ class CTA {
             CTAsocket.executeForEveryone("deleteSpecific", token.id, tokenDuplicate.id)
         }
         tokenFlags.push(flagData)
-        await token.update({"flags.Custom-Token-Animations.anim": tokenFlags})
+        await token.update({ "flags.Custom-Token-Animations.anim": tokenFlags })
 
         if (pushActor) {
             let actorDuplicate = actorFlags.find(f => f.name === flagData.name)
@@ -274,15 +276,15 @@ class CTA {
         CTAsocket.executeForEveryone("renderAnim", token.id, flagData)
     }
 
-      /**
-     * 
-     * @param {String} OGpath original texture path
-     * @param {Object} token Token to apply to
-     * @param {Object} oldData Previous effect data, used in update pathway
-     * @param {String} name name of the effect
-     * @returns 
-     */
-       static async animationDialog(OGpath, token, oldData, name) {
+    /**
+   * 
+   * @param {String} OGpath original texture path
+   * @param {Object} token Token to apply to
+   * @param {Object} oldData Previous effect data, used in update pathway
+   * @param {String} name name of the effect
+   * @returns 
+   */
+    static async animationDialog(OGpath, token, oldData, name) {
         if (canvas.tokens.controlled > 1 && !token) {
             ui.notifications.error(game.i18n.format("CTA.TokenError"));
             return;
@@ -385,7 +387,7 @@ class CTA {
         </div>
     </form>
         `
-        
+
         let dialog = await new Dialog({
 
             title: game.i18n.format("CTA.PickEffects"),
@@ -570,6 +572,10 @@ class CTA {
 
     // Add button to sidebar
     static getSceneControlButtons(buttons) {
+        if (!game.modules.get("test")?.active) {
+            ui.notifications.error(game.i18n.format("CTA.SocketLib_warn"))
+            return;
+        }
         let tokenButton = buttons.find(b => b.name == "token")
         let playerPermissions = game.settings.get("Custom-Token-Animations", "playerPermissions") === true ? true : game.user.isGM
         if (tokenButton) {
@@ -588,7 +594,7 @@ class CTA {
      * Create a macro from selected effect data
      * @param {Object} oldData Data to transform into a macro
      */
-     static generateMacro(oldData) {
+    static generateMacro(oldData) {
         let data = duplicate(oldData)
         let image = data.textureData.texturePath.includes(".webm") ? "icons/svg/acid.svg" : data.textureData.texturePath
         let macroData = {
@@ -615,14 +621,14 @@ class CTA {
             type: "script"
         }
         Macro.create(macroData)
-        ui.notifications.notify(game.i18n.format("CTA.MacroPrompt", {macroName: `CTA ${data.name}`}))
+        ui.notifications.notify(game.i18n.format("CTA.MacroPrompt", { macroName: `CTA ${data.name}` }))
     }
 
     /**
      * Start the "full pathway"
      * @param {Object} token Token to apply too
      */
-     static pickEffect(token, oldData) {
+    static pickEffect(token, oldData) {
         let CTAPick = new FilePicker({
             type: "imagevideo",
             current: "",
