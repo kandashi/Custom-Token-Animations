@@ -40,5 +40,7 @@
     "CTA.Permissions_hint" : "Allow players to alter their own CTA effects",
 
     "CTA.FadeAnims" : "Fade Animations",
-    "CTA.FadeAnims_hint" : "Animations will fade to opaque before removal"
+    "CTA.FadeAnims_hint" : "Animations will fade to opaque before removal",
+
+    "CTA.MacroPrompt" : "A macro named {macroName} was generated in your macro folder"
 } 

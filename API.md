@@ -1,27 +1,26 @@
 
 
 
-### pickEffect(token)
+### pickEffect(token, oldData)
 
 - Trigger the asset selection popup
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
 | token| Object  | Token instance to effect
+|oldData| Object | Optional data to pass into the animation dialog
 
   
 
-### addAnimation(token, textureData, pushToken, pushActor, name, update)
+### addAnimation(token, textureData, pushActor, name, oldID)
 - Individually add an animation to a token
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
 | token| Object  | Token instance to effect
-|pushToken | Boolean| Add effect to token or not
+|textueData| Object| Details of the effect
 |pushActor| Boolean| Add effect to prototype token for the actor
 |name| String| Effect Name
-|update| Boolean| Overright existing effect
-|textueData| Object| Details of the effect
 |id| String| id of the flag, leave false unless known
 
 ```
@@ -58,7 +57,7 @@ equip: boolean
 
 - Trigger the main effect creation dialog
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
 |OGPath|String| Optional, Path to effect
 |token| Object| Token to apply the effect to
@@ -66,11 +65,11 @@ equip: boolean
 |name| String| Optional, passed to update an existing effect
 
 
-### resetTweens(token)
-
+### resetTweens(token) 
+[DEPRECATED] Do not use
 - Reset the effects on a specific token
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
 |token| Object| Token to apply the effect to
   
@@ -80,18 +79,38 @@ equip: boolean
 - Trigger the Update pathway for a specific token
 - Launches into the pickEffect => animationDialog
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
-|OGPath|String| Optional, Path to effect
 |token| Object| Token to apply the effect to
 
-### removeAnimByName(token, name, removeActor)
+### removeAnim(token, animId, actorRemoval, fadeOut)
+
+- Remove an animation by its effect ID
+
+|Param| Type |Description| 
+|--|--|--|
+|token| Object| Token to apply the effect to
+|animID| String | ID of effect to remove 
+|actorRemoval| Boolean| Remove from prototype token or not
+|fadeOut | Boolean | Animate a fadeout of the effect
+
+### removeAnimByName(token, name, removeActor, fadeOut)
 
 - Remove an animation by its effect name
+- Internally calls `removeAnim`
 
-|Param| Type |Desctiption| 
+|Param| Type |Description| 
 |--|--|--|
-|OGPath|String| Optional, Path to effect
 |token| Object| Token to apply the effect to
 |name| String | Name of effect to remove (case sensitive)
 |removeActor| Boolean| Remove from prototype token or not
+|fadeOut | Boolean | Animate a fadeout of the effect
+
+### hasAnim(token, name)
+
+- Boolean check for animation on a token
+
+|Param| Type |Description| 
+|--|--|--|
+|token| Object| Token to apply the effect to
+|name| String | Name of effect to check

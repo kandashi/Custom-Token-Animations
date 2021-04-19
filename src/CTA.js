@@ -332,14 +332,13 @@ class CTA {
             <input id="scale" name="scale" type="text" value= "${oldData?.scale || "1"}" required></input>
         </div>
         <div class="form-group">
-            <label for="rotation">${game.i18n.format("CTA.StaticImage")}: </label>
+            <label for="rotation"><span>${game.i18n.format("CTA.StaticImage")}:</span>
             <span class="units">${game.i18n.format("CTA.StaticImage_hint")}</span> </label>
             <input id="rotation" name="rotation" type="checkbox" ${oldData?.rotation === "static" ? 'checked' : ''} ></input>
         </div>
         <div class="form-group">
-            <label for="speed"><span>${game.i18n.format("CTA.SpeedOfRotation")}: </span>
-            <span class="units">${game.i18n.format("CTA.SpeedOfRotation_hint")}</span>
-            </label>
+            <label for="speed"><span>${game.i18n.format("CTA.SpeedOfRotation")}:</span>
+            <span class="units">${game.i18n.format("CTA.SpeedOfRotation_hint")}</span></label>
             <input id="speed" name="speed" type="number" step="0.1" value= "${oldData?.speed || 0}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
         </div>
         <div class="form-group">
@@ -352,12 +351,12 @@ class CTA {
             <input id="multiple" name="multiple" type="number" min="1" value= "${oldData?.multiple || 1}" ${oldData?.rotation === "static" ? 'disabled' : ''}></input>
         </div>
         <div class="form-group">
-            <label for="xScale">${game.i18n.format("CTA.PositionXScale")}:</label>
+            <label for="xScale"><span>${game.i18n.format("CTA.PositionXScale")}:</span>
             <span class="units">${game.i18n.format("CTA.PositionXScale_hint")}</span> </label>
             <input id="xScale" name="xScale" type="number" value= "${oldX}" required></input>
         </div>
         <div class="form-group">
-            <label for="yScale">${game.i18n.format("CTA.PositionYScale")}:</label>
+            <label for="yScale"><span>${game.i18n.format("CTA.PositionYScale")}:</span>
             <span class="units">${game.i18n.format("CTA.PositionYScale_hint")}</span> </label>
             <input id="yScale" name="yScale" type="number" value= "${oldY}" required></input>
         </div>
@@ -370,17 +369,17 @@ class CTA {
             <input type="color" id="tint" name="tint" value="#${hexColour || "FFFFFF"}">
         </div>
         <div class="form-group">
-            <label for="belowToken">${game.i18n.format("CTA.RenderBelow")}:</label>
+            <label for="belowToken"><span>${game.i18n.format("CTA.RenderBelow")}:</span>
             <span class="units">${game.i18n.format("CTA.RenderBelow_hint")}</label>
             <input id="belowToken" name="belowToken" type="checkbox" ${oldData?.belowToken === true ? 'checked' : ''}></input>
         </div>
         <div class="form-group">
-            <label for="pushActor">${game.i18n.format("CTA.PermanentActor")}:</label>
+            <label for="pushActor"><span>${game.i18n.format("CTA.PermanentActor")}:</span>
             <span class="units">${game.i18n.format("CTA.PermanentActor_hint")}</label>
             <input id="pushActor" name="pushActor" type="checkbox" ${animFlag === true ? 'checked' : ''}></input>
         </div>
         <div class="form-group">
-            <label for="equip">${game.i18n.format("CTA.PermanentActor_hint")}:</label>
+            <label for="equip"><span>${game.i18n.format("CTA.PermanentActor_hint")}:</span>
             <span class="units">${game.i18n.format("CTA.PermanentActor_hint")}</span> </label>
             <input id="equip" name="equip" type="checkbox" ${oldData?.equip === true ? 'checked' : ''}></input>
         </div>
@@ -616,6 +615,7 @@ class CTA {
             type: "script"
         }
         Macro.create(macroData)
+        ui.notifications.notify(game.i18n.format("CTA.MacroPrompt", {macroName: `CTA ${data.name}`}))
     }
 
     /**
