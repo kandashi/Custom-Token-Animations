@@ -1,3 +1,4 @@
+let CTAsocket;
 class CTArender {
     /**
      * flagData = {
@@ -653,7 +654,7 @@ class CTA {
 }
 
 Hooks.once("socketlib.ready", () => {
-    let CTAsocket = socketlib.registerModule("Custom-Token-Animations");
+    CTAsocket = socketlib.registerModule("Custom-Token-Animations");
     CTAsocket.register("renderAnim", CTArender.RenderAnim)
     CTAsocket.register("removeByName", CTA.removeAnimByName)
     CTAsocket.register("removeById", CTA.removeAnim)
