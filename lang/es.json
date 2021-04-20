@@ -29,8 +29,8 @@
     "CTA.TokenError" : "Por favor, elige sólo un token",
     "CTA.Confirm" : "Confirmar",
     "CTA.Confirm_Content" : "¿Estás seguro de que quieres quitar esta animación",
-    "CTA.ActorDelete" : "Borrar de Actor",
-    "CTA.TokenDelete" : "Borrar de Token",
+    "CTA.ActorDelete" : "Borrar del Actor",
+    "CTA.TokenDelete" : "Borrar del Token",
     "CTA.Return" : "Volver",
     "CTA.Replicate" : "Replicar a una Macro",
     "CTA.AddNew" : "Añadir Nuevo",
@@ -45,5 +45,5 @@
     "CTA.FadeAnims_hint" : "Las anim. se desvanecerán antes de ser eliminadas",
 
     "CTA.MacroPrompt" : "Una macro llamada {macroName} ha sido creada en tu carpeta de macros",
-    "CTA.SocketLib_warn" : "Custom Token Animations necesica que socketLib esté instalado y activado"
+    "CTA.SocketLib_warn" : "Custom Token Animations necesita que socketLib esté instalado y activado"
 }
