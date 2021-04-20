@@ -1,4 +1,6 @@
-class CTA {
+import {MODULE_NAME} from './CTA';
+
+export class CTA {
 
     static canvasTweens = []
 
@@ -18,7 +20,7 @@ class CTA {
         Hooks.on("createToken", (scene, token) => {
             let tokenInstance = canvas.tokens.get(token._id)
             if (!tokenInstance) return;
-            let flags = tokenInstance.getFlag("Custom-Token-Animations", "anim") ? tokenInstance.getFlag("Custom-Token-Animations", "anim") : []
+            let flags = tokenInstance.getFlag(MODULE_NAME, "anim") ? tokenInstance.getFlag(MODULE_NAME, "anim") : []
             if (flags) CTA.AddTweens(tokenInstance)
         });
         Hooks.on("preUpdateToken", async (_scene, token, update) => {
@@ -131,14 +133,14 @@ class CTA {
             sceneId: canvas.scene.id,
             tokenId: token.id
         }
-        game.socket.emit('module.Custom-Token-Animations', socketData)
+        game.socket.emit('module.'+MODULE_NAME, socketData)
         if (update) CTA.resetTweens(token,false )
         if(!token.owner){
             return;
         }
         if (pushToken) {
-            //let flags = token.getFlag("Custom-Token-Animations", "anim") ? token.getFlag("Custom-Token-Animations", "anim") : []
-            let flagData = token.getFlag("Custom-Token-Animations", "anim") || []
+            //let flags = token.getFlag(MODULE_NAME, "anim") ? token.getFlag(MODULE_NAME, "anim") : []
+            let flagData = token.getFlag(MODULE_NAME, "anim") || []
             let flags = Array.from(flagData)
             let duplicate = flags.find(i => i.name === name)
             if (duplicate) {
@@ -152,7 +154,7 @@ class CTA {
                 textureData: textureData,
                 id: newID
             })
-            await token.setFlag("Custom-Token-Animations", "anim", flags)
+            await token.setFlag(MODULE_NAME, "anim", flags)
         }
         if (pushActor) {
             let flagData = getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || []
@@ -183,7 +185,7 @@ class CTA {
         if (token) testArray.push(token)
         else testArray = canvas.tokens.placeables
         for (let testToken of testArray) {
-            let tokenFlags = testToken.getFlag("Custom-Token-Animations", "anim") || []
+            let tokenFlags = testToken.getFlag(MODULE_NAME, "anim") || []
             let actorFlags = getProperty(testToken.actor.data, "token.flags.Custom-Token-Animations.anim") || []
             let totalFlags = tokenFlags.concat(actorFlags)
             let newFlag = totalFlags.reduce((map, obj) => map.set(obj.id, obj), new Map()).values()
@@ -379,14 +381,14 @@ class CTA {
      * Deprecated
      */
     static async updateEffect(token, name, key, value) {
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await token.getFlag(MODULE_NAME, "anim")
         for (let i of anims) {
             if (i.name === name) {
                 i[key] = value;
                 break;
             }
         }
-        await token.setFlag("Custom-Token-Animations", "anim", anims)
+        await token.setFlag(MODULE_NAME, "anim", anims)
         CTA.resetTweens(token, false)
     }
 
@@ -405,7 +407,7 @@ class CTA {
             child.destroy()
         }
 
-        let flag = token.getFlag("Custom-Token-Animations", "anim")
+        let flag = token.getFlag(MODULE_NAME, "anim")
         if (!flag) return;
         flag.forEach(f => {
             CTA.addAnimation(token, f.textureData, false, false, f.name, false, f.id)
@@ -450,7 +452,7 @@ class CTA {
      * Deprecated
      */
     static async incrementDialog(token, animId) {
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await token.getFlag(MODULE_NAME, "anim")
         let anim = anims.find(p => p.id === animId)
         new Dialog({
             title: `Increment ${anim.name}`,
@@ -481,18 +483,18 @@ class CTA {
     * Deprecated
     */
     static async incrementEffect(token, animId, value) {
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await token.getFlag(MODULE_NAME, "anim")
         let updateAnim = anims.find(i => i.id === animId)
         let updateValue = parseInt(updateAnim.multiple) + parseInt(value)
         updateAnim.multiple = updateValue;
-        await token.setFlag("Custom-Token-Animations", "anim", anims)
+        await token.setFlag(MODULE_NAME, "anim", anims)
         CTA.resetTweens(token, false)
     }
 
     // Add button to sidebar
     static getSceneControlButtons(buttons) {
         let tokenButton = buttons.find(b => b.name == "token")
-        let playerPermissions = game.settings.get("Custom-Token-Animations", "playerPermissions") === true ? true : game.user.isGM
+        let playerPermissions = game.settings.get(MODULE_NAME, "playerPermissions") === true ? true : game.user.isGM
         if (tokenButton) {
             tokenButton.tools.push({
                 name: "cta-anim",
@@ -513,11 +515,11 @@ class CTA {
      *      * @param {Boolean} fadeOut optional fade out
      */
     static async removeAnim(token, animId, actorRemoval, fadeOut) {
-        let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
+        let anims = await duplicate(token.getFlag(MODULE_NAME, "anim"))
         let removeAnim = anims.findIndex(i => i.id === animId)
         let oldAnim = anims.splice(removeAnim, 1)
         let icon = token.children.find(c => c.CTAid = oldAnim[0].id)
-        let fade = fadeOut || game.settings.get("Custom-Token-Animations", "fadeOut")
+        let fade = fadeOut || game.settings.get(MODULE_NAME, "fadeOut")
         if (fade) {
             TweenMax.to(icon, 2, { alpha: 0, onComplete: CTA._FinalRemoval, onCompleteParams: [token, actorRemoval, anims]})
         }
@@ -533,11 +535,11 @@ class CTA {
      * @param {Boolean} fadeOut optional fade out
      */
     static async removeAnimByName(token, animName, actorRemoval, fadeOut) {
-        let anims = await duplicate(token.getFlag("Custom-Token-Animations", "anim"))
+        let anims = await duplicate(token.getFlag(MODULE_NAME, "anim"))
         let removeAnim = anims.findIndex(i => i.name === animName)
         let oldAnim = anims.splice(removeAnim, 1)
         let icon = token.children.find(c => c.CTAid = oldAnim[0].id)
-        let fade = fadeOut || game.settings.get("Custom-Token-Animations", "fadeOut")
+        let fade = fadeOut || game.settings.get(MODULE_NAME, "fadeOut")
         if (fade) {
             TweenMax.to(icon, 2, { alpha: 0, onComplete: CTA._FinalRemoval, onCompleteParams: [token, actorRemoval, anims]})
         }
@@ -553,14 +555,14 @@ class CTA {
      */
     static async _FinalRemoval(token, actorRemoval, anims) {
         if (actorRemoval) await token.actor.update({ "token.flags.Custom-Token-Animations.anim": anims })
-        await token.setFlag("Custom-Token-Animations", "anim", anims)
+        await token.setFlag(MODULE_NAME, "anim", anims)
         CTA.resetTweens(token, false)
         let socketData = {
             method: "apply",
             sceneId: canvas.scene.id,
             tokenId: token.id
         }
-        game.socket.emit('module.Custom-Token-Animations', socketData)
+        game.socket.emit('module.'+MODULE_NAME, socketData)
 
     }
 
@@ -572,7 +574,7 @@ class CTA {
     static async getAnims(token) {
         if (canvas.tokens.controlled.length !== 1) { ui.notifications.notify("Please select one token"); return; }
         if (!token) token = canvas.tokens.controlled[0]
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await token.getFlag(MODULE_NAME, "anim")
         let content = ``;
         let allButtons = {
             one: {
@@ -665,7 +667,7 @@ class CTA {
      * @param {String} name 
      */
     static hasAnim(token, name) {
-        let anims = token.getFlag("Custom-Token-Animations", "anim")
+        let anims = token.getFlag(MODULE_NAME, "anim")
         if (!anims) return false;
         for (let testAnim of anims) {
             if (testAnim.name === name) return true;
@@ -679,7 +681,7 @@ Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
 
 Hooks.on('ready', () => {
-    game.socket.on('module.Custom-Token-Animations', socketData => {
+    game.socket.on('module.'+MODULE_NAME, socketData => {
         if (socketData.sceneId !== canvas.scene.id) return;
         if (socketData.method === "apply") {
             let token = canvas.tokens.get(socketData.tokenId)
@@ -704,7 +706,7 @@ Hooks.on("updateToken", (scene, token, update) => {
 
 
 Hooks.on('init', () => {
-    game.settings.register("Custom-Token-Animations", "playerPermissions", {
+    game.settings.register(MODULE_NAME, "playerPermissions", {
         name: "Player Permissions",
         hint: "Allow players to alter their own CTA effects",
         scope: "world",
@@ -712,7 +714,7 @@ Hooks.on('init', () => {
         default: false,
         type: Boolean,
     });
-    game.settings.register("Custom-Token-Animations", "fadeOut", {
+    game.settings.register(MODULE_NAME, "fadeOut", {
         name: "Fade Animations",
         hint: "Animations will fade to opaque before removal",
         scope: "world",
