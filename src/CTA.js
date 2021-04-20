@@ -655,7 +655,7 @@ export class CTA {
 export const MODULE_NAME = "Custom-Token-Animations";
 
 Hooks.once("socketlib.ready", () => {
-    CTAsocket = socketlib.registerModule(MODULE_NAME);
+    let CTAsocket = socketlib.registerModule(MODULE_NAME);
     CTAsocket.register("renderAnim", CTArender.RenderAnim)
     CTAsocket.register("removeByName", CTA.removeAnimByName)
     CTAsocket.register("removeById", CTA.removeAnim)
