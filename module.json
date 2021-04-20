@@ -1,18 +1,36 @@
-
 {
 	"name": "Custom-Token-Animations",
 	"title": "Custom Token Animations", 
 	"description": "Custom Token Animations",
 	"author": "Kandashi",
-	"version": "0.1.13",
-  "minimumCoreVersion": "0.7.5",
+	"version": "0.1.14",
+	"minimumCoreVersion": "0.7.5",
 	"compatibleCoreVersion": "0.7.9",
-	"scripts": [
-		"greensock/dist/gsap.min.js",
-		"src/customAnimations.js"
+	"dependencies": [
+		{
+		"name": "socketlib",
+		"manifest": "https://raw.githubusercontent.com/manuelVo/foundryvtt-socketlib/master/module.json"
+		}
 	],
+	"languages": [
+		{
+		  "lang": "en",
+		  "name": "English",
+		  "path": "languages/en.json"
+		}
+	],
+	"scripts": [
+		"greensock/dist/gsap.min.js"
+	],
+	"esmodules": [
+		"src/CTA.js"
+	],
+	"type": "module",
 	"socket": true,
 	"url": "https://github.com/kandashi/Custom-Token-Animations",
     "manifest": "https://raw.githubusercontent.com/kandashi/Custom-Token-Animations/main/module.json",
-	"download": "https://github.com/kandashi/Custom-Token-Animations/archive/main.zip"
+	"download": "https://github.com/kandashi/Custom-Token-Animations/archive/main.zip",
+	"changelog": "https://raw.githubusercontent.com/kandashi/Custom-Token-Animations/master/changelog.md",
+	"bugs": "https://github.com/kandashi/Custom-Token-Animations/issues",
+	"allowBugReporter": true
 }

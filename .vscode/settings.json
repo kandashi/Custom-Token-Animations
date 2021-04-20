@@ -1,11 +1,14 @@
 {
     "cSpell.words": [
+        "Arender",
+        "Asocket",
         "Atexture",
         "Atweens",
         "Gpath",
         "PREFIXDIRSTR",
         "Tweens",
         "anims",
-        "gsap"
+        "gsap",
+        "socketlib"
     ]
 }
