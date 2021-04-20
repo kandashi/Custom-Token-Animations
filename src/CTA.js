@@ -693,5 +693,4 @@ Hooks.on('init', () => {
 
 Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
-
 window.CTA = CTA;
