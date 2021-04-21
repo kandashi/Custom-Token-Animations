@@ -162,6 +162,7 @@ class CTA {
         if (token) testArray.push(token)
         else testArray = canvas.tokens.placeables
         for (let testToken of testArray) {
+            if(!testToken.actor) continue;
             let tokenFlags = testToken.getFlag("Custom-Token-Animations", "anim") || []
             let actorFlags = getProperty(testToken.actor.data, "token.flags.Custom-Token-Animations.anim") || []
             let totalFlags = tokenFlags.concat(actorFlags)
@@ -520,14 +521,16 @@ class CTA {
                                 label: game.i18n.format("CTA.ActorDelete"),
                                 icon: `<i class="fas fa-check"></i>`,
                                 callback: () => {
-                                    CTA.removeAnim(token, updateAnim, true, true)
+                                    let fadeOut = game.settings.get("Custom-Token-Animations", "fadeOut")
+                                    CTA.removeAnim(token, updateAnim, true, fadeOut)
                                 }
                             },
                             two: {
                                 label: game.i18n.format("CTA.TokenDelete"),
                                 icon: `<i class="fas fa-check"></i>`,
                                 callback: () => {
-                                    CTA.removeAnim(token, updateAnim, false, true)
+                                    let fadeOut = game.settings.get("Custom-Token-Animations", "fadeOut")
+                                    CTA.removeAnim(token, updateAnim, false, fadeOut)
                                 }
                             },
                             three: {
@@ -625,7 +628,7 @@ class CTA {
                 equip: ${data.textureData.equip},
                 lock : ${data.textureData.lock}
             }
-            CTA.addAnimation(token, textureData, true, false, "${data.name}", false, null)
+            CTA.addAnimation(token, textureData, false, "${data.name}", null)
             `,
             img: image,
             name: `CTA ${data.name}`,
@@ -693,4 +696,5 @@ Hooks.on('init', () => {
 
 Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
+
 window.CTA = CTA;
