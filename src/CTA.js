@@ -1,4 +1,5 @@
 let CTAsocket;
+let CTAtweens = []
 class CTArender {
     /**
      * flagData = {
@@ -59,6 +60,7 @@ class CTArender {
                 else { icon.zIndex = 1000 }
                 icon.angle = i * (360 / multiple)
                 let tween = TweenMax.to(icon, speed, { angle: (360 + icon.angle), repeat: -1, ease: Linear.easeNone });
+                CTAtweens.push(tween)
             }
         }
         if (rotation === "static") {
@@ -120,12 +122,17 @@ class CTArender {
 
 class CTA {
 
+
     static ready() {
 
         Hooks.on("canvasInit", async () => {
+            if (CTAtweens) {
+                CTAtweens.forEach(i => i.kill())
+            }
             Hooks.once("canvasPan", () => {
                 CTA.AddTweens()
             })
+
         });
         Hooks.on("preDeleteToken", (scene, token) => {
             let deleteToken = canvas.tokens.get(token._id)
@@ -154,7 +161,6 @@ class CTA {
                 CTA.AddTweens(fullToken)
             }
         })
-
     }
 
     static AddTweens(token) {
@@ -162,7 +168,7 @@ class CTA {
         if (token) testArray.push(token)
         else testArray = canvas.tokens.placeables
         for (let testToken of testArray) {
-            if(!testToken.actor) continue;
+            if (!testToken.actor) continue;
             let tokenFlags = testToken.getFlag("Custom-Token-Animations", "anim") || []
             let actorFlags = getProperty(testToken.actor.data, "token.flags.Custom-Token-Animations.anim") || []
             let totalFlags = tokenFlags.concat(actorFlags)
