@@ -1,3 +1,5 @@
+![](https://img.shields.io/badge/Foundry-v0.8.6-informational)![Latest Release Download Count](https://img.shields.io/github/downloads/kandashi/Custom-Token-Animations/latest/module.zip)![Forge Installs](https://img.shields.io/badge/dynamic/json?label=Forge%20Installs&query=package.installs&suffix=%25&url=https%3A%2F%2Fforge-vtt.com%2Fapi%2Fbazaar%2Fpackage%2FCustom-Token-Animations&colorB=4aa94a)
+
 # Custom-Token-Animations
 
 ![niceVisuals](https://github.com/kandashi/Custom-Token-Animations/blob/main/CTA%20full.gif?raw=true)
