@@ -195,7 +195,12 @@ class CTA {
     }
 
 
+
     static addAnimation(token, textureData, pushActor, name, oldID) {
+        if(typeof textureData === "string"){
+            let presets = game.settings.get("Custom-Token-Animations", "presets")
+            textureData = presets.find(i => i.name === textureData)
+        }
         if (typeof token === "string") token = canvas.tokens.get(token)
         if (!game.user.isGM) {
             CTAsocket.executeAsGM("addAnimation", token.id, textureData, pushActor, name, oldID)
@@ -634,7 +639,12 @@ class CTA {
                 equip: ${data.textureData.equip},
                 lock : ${data.textureData.lock}
             }
-            CTA.addAnimation(token, textureData, false, "${data.name}", null)
+            if(!CTA.hasAnim(token, "${data.name}")){
+                CTA.removeAnimByName(token, "${data.name}", false, true)
+            }
+            else {
+                CTA.addAnimation(token, textureData, false, "${data.name}", null)
+            }
             `,
             img: image,
             name: `CTA ${data.name}`,
@@ -660,6 +670,45 @@ class CTA {
         })
         CTAPick.browse();
     }
+
+    static AddPreset(name, object) {
+        if (!name) {
+            ui.notifications.error("Please provide a name for the preset")
+            return;
+        }
+        if (!object) {
+            ui.notifications.error("Please provide data for the preset")
+            return;
+        }
+        object.name = name
+        let presets = game.settings.get("Custom-Token-Animations", "presets");
+        let duplicate = presets.find(i => i.name === object.name)
+        if (duplicate) {
+            let index = presets.indexOf(duplicate)
+            if (index > -1) {
+                presets.splice(index, 1)
+            }
+            presets.push(object)
+            new Dialog({
+                content: `${object.name} is already a preset, confirm overwrite`,
+                buttons: {
+                    one: {
+                        label: "OK",
+                        callback: () => {
+                            game.settings.set("Custom-Token-Animations", "presets", presets)
+                        }
+                    },
+                    two: {
+                        label: "Return"
+                    }
+                }
+            }).render(true)
+        }
+        else {
+            presets.push(object)
+            game.settings.set("Custom-Token-Animations", "presets", presets)
+        }
+    }
 }
 
 Hooks.once("socketlib.ready", () => {
@@ -673,7 +722,7 @@ Hooks.once("socketlib.ready", () => {
 })
 
 
-Hooks.on("updateToken", (scene, token, update) => {
+Hooks.on("updateToken", (token, update) => {
     if (!getProperty(update, "rotation")) return;
     let fullToken = canvas.tokens.get(token._id)
     let icons = fullToken.children.filter(i => i.CTA && !i.CTAlock)
@@ -698,9 +747,16 @@ Hooks.on('init', () => {
         default: true,
         type: Boolean,
     });
+    game.settings.register("Custom-Token-Animations", "presets", {
+        scope: "world",
+        config: false,
+        default: [],
+        type: Object,
+    })
 })
 
 Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
 
 window.CTA = CTA;
+
