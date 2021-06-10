@@ -242,8 +242,8 @@ class CTA {
             CTAsocket.executeAsGM("removeById", token.id, animId, actorRemoval, fadeOut);
             return;
         }
-        let tokenFlags = Array.from(token.data.flags["Custom-Token-Animations"]?.anim) || []
-        let actorFlags = Array.from(token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || []
+        let tokenFlags = Array.from((token.data.flags["Custom-Token-Animations"]?.anim) || [])
+        let actorFlags = Array.from((token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || [])
 
         let tokenAnimRemove = tokenFlags.findIndex(i => i.id === animId)
         tokenFlags.splice(tokenAnimRemove, 1)
@@ -270,7 +270,7 @@ class CTA {
             CTAsocket.executeAsGM("removeByName", token.id, animName, actorRemoval, fadeOut);
             return;
         }
-        let tokenFlags = Array.from(token.getFlag("Custom-Token-Animations", "anim") || [])
+        let tokenFlags = Array.from((token.data.flags["Custom-Token-Animations"]?.anim) || [])
         if (!Array.isArray(animName)) animName = [animName]
         animName.forEach(a => {
             let removedAnim = tokenFlags.find(i => i.name === a)
@@ -287,8 +287,8 @@ class CTA {
      */
     static async PushFlags(token, flagData, pushActor) {
         if (!game.user.isGM) return;
-        let tokenFlags = Array.from(token.data.flags["Custom-Token-Animations"]?.anim) || []
-        let actorFlags = Array.from(token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || []
+        let tokenFlags = Array.from((token.data.flags["Custom-Token-Animations"]?.anim) || [])
+        let actorFlags = Array.from((token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || [])
 
 
         for (let flag of flagData) {
