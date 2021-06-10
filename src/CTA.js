@@ -196,7 +196,7 @@ class CTA {
 
 
 
-    static addAnimation(token, textureData, pushActor, name, oldID) {
+    static async addAnimation(token, textureData, pushActor, name, oldID) {
         if (typeof textureData === "string") {
             let presets = game.settings.get("Custom-Token-Animations", "presets")
             textureData = presets.find(i => i.name === textureData)
