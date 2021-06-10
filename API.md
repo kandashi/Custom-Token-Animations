@@ -18,7 +18,7 @@
 |Param| Type |Description| 
 |--|--|--|
 | token| Object  | Token instance to effect
-|textueData| Object| Details of the effect
+|textureData| Object| Details of the effect, can be an array of objects
 |pushActor| Boolean| Add effect to prototype token for the actor
 |name| String| Effect Name
 |id| String| id of the flag, leave false unless known
@@ -102,7 +102,7 @@ equip: boolean
 |Param| Type |Description| 
 |--|--|--|
 |token| Object| Token to apply the effect to
-|name| String | Name of effect to remove (case sensitive)
+|name| String | Name of effect to remove (case sensitive), can be an array of strings
 |removeActor| Boolean| Remove from prototype token or not
 |fadeOut | Boolean | Animate a fadeout of the effect
 
@@ -114,3 +114,25 @@ equip: boolean
 |--|--|--|
 |token| Object| Token to apply the effect to
 |name| String | Name of effect to check
+
+### AddPreset(name, object)
+
+- Add animation data to preset list
+
+|Param| Type |Description| 
+|--|--|--|
+|name| String| Name of the preset
+|object| Object | The textureData to add to the preset
+
+
+### RemovePreset(name)
+
+- Remove animation data from the preset list
+
+|Param| Type |Description| 
+|--|--|--|
+|name| String| Name of the preset to remove
+
+### ListPresets()
+
+- Lists all presets in the chat

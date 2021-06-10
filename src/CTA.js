@@ -169,8 +169,8 @@ class CTA {
         else testArray = canvas.tokens.placeables
         for (let testToken of testArray) {
             if (!testToken.actor) continue;
-            let tokenFlags = testToken.getFlag("Custom-Token-Animations", "anim") || []
-            let actorFlags = getProperty(testToken.actor.data, "token.flags.Custom-Token-Animations.anim") || []
+            let tokenFlags = testToken.data.flags["Custom-Token-Animations"]?.anim || []
+            let actorFlags = testToken.actor.data.token.flags["Custom-Token-Animations"]?.anim || []
             let totalFlags = tokenFlags.concat(actorFlags)
             let newFlag = totalFlags.reduce((map, obj) => map.set(obj.id, obj), new Map()).values()
             if (!newFlag) continue;
@@ -195,33 +195,59 @@ class CTA {
     }
 
 
-    static addAnimation(token, textureData, pushActor, name, oldID) {
+
+    static async addAnimation(token, textureData, pushActor, name, oldID) {
+        if (typeof textureData === "string") {
+            let presets = game.settings.get("Custom-Token-Animations", "presets")
+            textureData = presets.find(i => i.name === textureData)
+        }
         if (typeof token === "string") token = canvas.tokens.get(token)
         if (!game.user.isGM) {
             CTAsocket.executeAsGM("addAnimation", token.id, textureData, pushActor, name, oldID)
             return;
         }
-        let flagId = oldID || randomID()
-        let flagData = {
-            name: name,
-            textureData: textureData,
-            id: flagId
+        let flagData = []
+        if (Array.isArray(textureData)) {
+            if(typeof textureData[0] === "string"){
+                let presets = game.settings.get("Custom-Token-Animations", "presets")
+                textureData = textureData.map(s => {
+                    return presets.find(i => i.name === s)
+                })
+            }
+            for (let i = 0; i < textureData.length; i++) {
+                let flagId = randomID()
+                flagData.push({
+                    name: name[i],
+                    textureData: textureData[i],
+                    id: flagId
+                })
+            }
         }
+        else if (typeof textureData === "object") {
+            let flagId = oldID || randomID()
+            flagData.push({
+                name: name,
+                textureData: textureData,
+                id: flagId
+            })
+        }
+
         CTA.PushFlags(token, flagData, pushActor)
     }
 
     static async removeAnim(token, animId, actorRemoval, fadeOut) {
+        if(!token) console.error("No token provided to removeAnim")
         if (typeof token === "string") token = canvas.tokens.get(token)
         if (!game.user.isGM) {
             CTAsocket.executeAsGM("removeById", token.id, animId, actorRemoval, fadeOut);
             return;
         }
-        let tokenFlags = Array.from(token.getFlag("Custom-Token-Animations", "anim") || [])
-        let actorFlags = Array.from(getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || [])
+        let tokenFlags = Array.from(token.data.flags["Custom-Token-Animations"]?.anim) || []
+        let actorFlags = Array.from(token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || []
 
         let tokenAnimRemove = tokenFlags.findIndex(i => i.id === animId)
         tokenFlags.splice(tokenAnimRemove, 1)
-        await token.update({ "flags.Custom-Token-Animations": tokenFlags })
+        await token.document.update({ "flags.Custom-Token-Animations.anim": tokenFlags })
         if (actorRemoval) {
             let actorAnimRemove = actorFlags.findIndex(i => i.id === animId)
             actorFlags.splice(actorAnimRemove, 1)
@@ -238,14 +264,18 @@ class CTA {
     }
 
     static removeAnimByName(token, animName, actorRemoval, fadeOut) {
+        if(!token) console.error("No token provided to removeAnimByName")
         if (typeof token === "string") token = canvas.tokens.get(token)
         if (!game.user.isGM) {
             CTAsocket.executeAsGM("removeByName", token.id, animName, actorRemoval, fadeOut);
             return;
         }
         let tokenFlags = Array.from(token.getFlag("Custom-Token-Animations", "anim") || [])
-        let removedAnim = tokenFlags.find(i => i.name === animName)
-        CTA.removeAnim(token.id, removedAnim.id, actorRemoval, fadeOut)
+        if (!Array.isArray(animName)) animName = [animName]
+        animName.forEach(a => {
+            let removedAnim = tokenFlags.find(i => i.name === a)
+            CTA.removeAnim(token.id, removedAnim.id, actorRemoval, fadeOut)
+        })
     }
 
 
@@ -257,32 +287,37 @@ class CTA {
      */
     static async PushFlags(token, flagData, pushActor) {
         if (!game.user.isGM) return;
-        let tokenFlags = Array.from(token.getFlag("Custom-Token-Animations", "anim") || [])
-        let actorFlags = Array.from(getProperty(token, "actor.data.token.flags.Custom-Token-Animations.anim") || [])
+        let tokenFlags = Array.from(token.data.flags["Custom-Token-Animations"]?.anim) || []
+        let actorFlags = Array.from(token.actor.data.token.flags["Custom-Token-Animations"]?.anim) || []
 
-        let tokenDuplicate = tokenFlags.find(f => f.name === flagData.name)
-        if (tokenDuplicate) {
-            let index = tokenFlags.indexOf(tokenDuplicate)
-            if (index > -1) {
-                tokenFlags.splice(index, 1)
+
+        for (let flag of flagData) {
+            let tokenDuplicate = tokenFlags.find(f => f.name === flag.name)
+            if (tokenDuplicate) {
+                let index = tokenFlags.indexOf(tokenDuplicate)
+                if (index > -1) {
+                    tokenFlags.splice(index, 1)
+                }
+                CTAsocket.executeForEveryone("deleteSpecific", token.id, tokenDuplicate.id)
             }
-            CTAsocket.executeForEveryone("deleteSpecific", token.id, tokenDuplicate.id)
         }
-        tokenFlags.push(flagData)
-        await token.update({ "flags.Custom-Token-Animations.anim": tokenFlags })
+        tokenFlags = tokenFlags.concat(flagData)
+        await token.document.update({ "flags.Custom-Token-Animations.anim": tokenFlags })
 
         if (pushActor) {
-            let actorDuplicate = actorFlags.find(f => f.name === flagData.name)
-            if (actorDuplicate) {
-                let index = actorFlags.indexOf(actorDuplicate)
-                if (index > -1) {
-                    actorFlags.splice(index, 1)
+            for (let flag of flagData) {
+                let actorDuplicate = actorFlags.find(f => f.name === flag.name)
+                if (actorDuplicate) {
+                    let index = actorFlags.indexOf(actorDuplicate)
+                    if (index > -1) {
+                        actorFlags.splice(index, 1)
+                    }
                 }
             }
-            actorFlags.push(flagData)
+            actorFlags = actorFlags.concat(flagData)
             await token.actor.update({ "token.flags.Custom-Token-Animations.anim": actorFlags })
         }
-        CTAsocket.executeForEveryone("renderAnim", token.id, flagData)
+        flagData.forEach(f => CTAsocket.executeForEveryone("renderAnim", token.id, f))
     }
 
     /**
@@ -501,7 +536,7 @@ class CTA {
     static async getAnims(token) {
         if (canvas.tokens.controlled.length !== 1) { ui.notifications.notify(game.i18n.format("CTA.TokenError")); return; }
         if (!token) token = canvas.tokens.controlled[0]
-        let anims = await token.getFlag("Custom-Token-Animations", "anim")
+        let anims = await token.data.flags["Custom-Token-Animations"]?.anim
         let content = ``;
         let allButtons = {
             one: {
@@ -634,7 +669,12 @@ class CTA {
                 equip: ${data.textureData.equip},
                 lock : ${data.textureData.lock}
             }
-            CTA.addAnimation(token, textureData, false, "${data.name}", null)
+            if(CTA.hasAnim(token, "${data.name}")){
+                CTA.removeAnimByName(token, "${data.name}", false, true)
+            }
+            else {
+                CTA.addAnimation(token, textureData, false, "${data.name}", null)
+            }
             `,
             img: image,
             name: `CTA ${data.name}`,
@@ -660,6 +700,71 @@ class CTA {
         })
         CTAPick.browse();
     }
+
+    static AddPreset(name, object) {
+        if (!name) {
+            ui.notifications.error("Please provide a name for the preset")
+            return;
+        }
+        if (!object) {
+            ui.notifications.error("Please provide data for the preset")
+            return;
+        }
+        object.name = name
+        let presets = game.settings.get("Custom-Token-Animations", "presets");
+        let duplicate = presets.find(i => i.name === object.name)
+        if (duplicate) {
+            let index = presets.indexOf(duplicate)
+            if (index > -1) {
+                presets.splice(index, 1)
+            }
+            presets.push(object)
+            new Dialog({
+                content: `${object.name} is already a preset, confirm overwrite`,
+                buttons: {
+                    one: {
+                        label: "OK",
+                        callback: () => {
+                            game.settings.set("Custom-Token-Animations", "presets", presets)
+                        }
+                    },
+                    two: {
+                        label: "Return"
+                    }
+                }
+            }).render(true)
+        }
+        else {
+            presets.push(object)
+            game.settings.set("Custom-Token-Animations", "presets", presets)
+        }
+        ui.notifications.notify(`${object.name} added to CTA presets`)
+    }
+
+    static RemovePreset(name) {
+        if (!name) {
+            ui.notifications.error("Please provide a name for the preset")
+            return;
+        }
+        let presets = game.settings.get("Custom-Token-Animations", "presets");
+        let removePreset = presets.find(i => i.name === name)
+        if (!removePreset) {
+            ui.notifications.error("No preset with that name exists")
+            return;
+        }
+        let index = presets.indexOf(removePreset)
+        if (index > -1) {
+            presets.splice(index, 1)
+            ui.notifications.notify(`${removePreset.name} was removed from the presets`)
+        }
+        game.settings.set("Custom-Token-Animations", "presets", presets)
+    }
+
+    static ListPresets(){
+        let presets = game.settings.get("Custom-Token-Animations", "presets")
+        let content = presets.reduce((a,v) => {return a+=`${v.name}<br>`},"" )
+        ChatMessage.create({content: `CTA presets are: <br> ${content}`})
+    }
 }
 
 Hooks.once("socketlib.ready", () => {
@@ -673,7 +778,7 @@ Hooks.once("socketlib.ready", () => {
 })
 
 
-Hooks.on("updateToken", (scene, token, update) => {
+Hooks.on("updateToken", (token, update) => {
     if (!getProperty(update, "rotation")) return;
     let fullToken = canvas.tokens.get(token._id)
     let icons = fullToken.children.filter(i => i.CTA && !i.CTAlock)
@@ -698,9 +803,16 @@ Hooks.on('init', () => {
         default: true,
         type: Boolean,
     });
+    game.settings.register("Custom-Token-Animations", "presets", {
+        scope: "world",
+        config: false,
+        default: [],
+        type: Object,
+    })
 })
 
 Hooks.on('init', CTA.ready);
 Hooks.on('getSceneControlButtons', CTA.getSceneControlButtons)
 
 window.CTA = CTA;
+
