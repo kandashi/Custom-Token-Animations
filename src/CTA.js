@@ -669,7 +669,7 @@ class CTA {
                 equip: ${data.textureData.equip},
                 lock : ${data.textureData.lock}
             }
-            if(!CTA.hasAnim(token, "${data.name}")){
+            if(CTA.hasAnim(token, "${data.name}")){
                 CTA.removeAnimByName(token, "${data.name}", false, true)
             }
             else {

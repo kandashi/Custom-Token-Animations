@@ -7,3 +7,4 @@ Added support for addition and removal of multiple effects at once
     `textureData` and `name` on the `CTA.addAnimation` command both accept arrays of their relevant types now, 
     `CTA.removeAnimByName` accepts an array of strings to remove multiple effects
 
+Changed the generated macros to toggle on/off the affect
