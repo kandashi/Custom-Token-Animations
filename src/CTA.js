@@ -23,12 +23,13 @@ class CTArender {
             scale = [`${scale}`, `${scale}`];
         }
         else {
-            scale = scale.split(",")
+            scale = scale.includes("/") ? scale.split("/") : scale.split(",")
             if (scale.length === 1) scale[1] = scale[0]
         }
         if (equip) {
-            container = token.children.find(i => i.isSprite && i.texture.baseTexture?.imageUrl?.includes(token.data.img))
+            container = token.children.find(i => i.isSprite && i.texture.baseTexture?.resource.url?.includes(token.data.img))
             container.CTAcontainer = true
+            container.sortableChildren = true
             CTAtexture.orig = { height: textureSize * parseFloat(scale[1]) / container.scale.x, width: textureSize * parseFloat(scale[0]) / container.scale.y, x: -textureSize, y: -textureSize }
         }
         else {
@@ -632,7 +633,7 @@ class CTA {
             return;
         }
         let tokenButton = buttons.find(b => b.name == "token")
-        let playerPermissions = game.settings.get("Custom-Token-Animations", "playerPermissions") === true ? true : game.user.isGM
+        let playerPermissions = game.settings.get("Custom-Token-Animations", "playerPermissions") === true ? true : game.user.testUserPermission(game.user, "PERMISSION.DrawingCreate") ? true : game.user.isGM
         if (tokenButton) {
             tokenButton.tools.push({
                 name: "cta-anim",
