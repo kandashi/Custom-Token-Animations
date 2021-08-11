@@ -8,3 +8,9 @@ Added support for addition and removal of multiple effects at once
     `CTA.removeAnimByName` accepts an array of strings to remove multiple effects
 
 Changed the generated macros to toggle on/off the affect
+
+## 0.2.6
+Added more european accessability, due to issues with using `,` to mark decimal places
+    To navigate this, you can now use `/` to split scale fields, which will be used preferentially over `,`
+Updated the `isEquipment` to properly work with 0.8
+Updated CTA player permissions to allow users with Create Drawing permission to use the CTA controls
