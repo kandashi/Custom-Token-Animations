@@ -18,7 +18,7 @@
 |Param| Type |Description| 
 |--|--|--|
 | token| Object  | Token instance to effect
-|textureData| Object| Details of the effect, can be an array of objects
+|textureData| Object| Details of the effect, can be an array of objects. Can also be a String Name to add a preset
 |pushActor| Boolean| Add effect to prototype token for the actor
 |name| String| Effect Name
 |id| String| id of the flag, leave false unless known
