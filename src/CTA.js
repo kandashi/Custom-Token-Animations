@@ -27,7 +27,7 @@ class CTArender {
             if (scale.length === 1) scale[1] = scale[0]
         }
         if (equip) {
-            container = token.children.find(i => i.isSprite && i.texture.baseTexture?.resource.url?.includes(token.data.img))
+            container = token.icon
             container.CTAcontainer = true
             container.sortableChildren = true
             CTAtexture.orig = { height: textureSize * parseFloat(scale[1]) / container.scale.x, width: textureSize * parseFloat(scale[0]) / container.scale.y, x: -textureSize, y: -textureSize }
@@ -113,6 +113,8 @@ class CTArender {
     static DeleteSpecificAnim(tokenID, id) {
         let token = canvas.tokens.get(tokenID)
         let icons = token.children?.filter(c => c.CTAid === id)
+        let icon2 = token.icon.children?.filter(c => c.CTAid === id)
+        icons = icons.concat(icon2)
         for (let icon of icons) {
             TweenMax.killTweensOf(icon)
             icon.destroy()
@@ -149,7 +151,7 @@ class CTA {
         Hooks.on("preUpdateToken", async (_scene, token, update) => {
             if ("height" in update || "width" in update) {
                 let fullToken = canvas.tokens.get(token._id)
-                let CTAtweens = fullToken.children.filter(c => c.CTA === true)
+                let CTAtweens = fullToken.children.filter(c => c.CTA === true).concat(fullToken.icon.children.filter(c => c.CTA === true))
                 for (let child of CTAtweens) {
                     TweenMax.killTweensOf(child)
                     child.destroy()
@@ -780,8 +782,8 @@ Hooks.once("socketlib.ready", () => {
 
 
 Hooks.on("updateToken", (token, update) => {
-    if (!getProperty(update, "rotation")) return;
-    let fullToken = canvas.tokens.get(token._id)
+    if (typeof(getProperty(update, "rotation")) !== "number") return;
+    let fullToken = canvas.tokens.get(token.id)
     let icons = fullToken.children.filter(i => i.CTA && !i.CTAlock)
     icons.forEach(i => i.angle = update.rotation)
 })
