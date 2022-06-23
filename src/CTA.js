@@ -189,7 +189,7 @@ class CTA {
          * @param {String} name 
          */
     static hasAnim(token, name) {
-        let anims = token.getFlag("Custom-Token-Animations", "anim")
+        let anims = token.document.getFlag("Custom-Token-Animations", "anim")
         if (!anims) return false;
         for (let testAnim of anims) {
             if (testAnim.name === name) return true;
