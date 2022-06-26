@@ -273,7 +273,7 @@ class CTA {
             CTAsocket.executeAsGM("removeByName", token.id, animName, actorRemoval, fadeOut);
             return;
         }
-        let tokenFlags = Array.from(token.getFlag("Custom-Token-Animations", "anim") || [])
+        let tokenFlags = Array.from(token.document.getFlag("Custom-Token-Animations", "anim") || [])
         if (!Array.isArray(animName)) animName = [animName]
         animName.forEach(a => {
             let removedAnim = tokenFlags.find(i => i.name === a)
